@@ -17,7 +17,7 @@ $plugin['name'] = 'mem_postmaster';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '1.0.10';
+$plugin['version'] = '1.0.12';
 $plugin['author'] = 'Michael Manfre';
 $plugin['author_uri'] = 'http://manfre.net/';
 $plugin['description'] = 'Simple email-on-post/newsletter manager for Textpattern';
@@ -37,7 +37,7 @@ $plugin['order'] = '5';
 // 3 = admin               : only on the admin side (no AJAX)
 // 4 = admin+ajax          : only on the admin side (AJAX supported)
 // 5 = public+admin+ajax   : on both the public and admin side (AJAX supported)
-$plugin['type'] = '1';
+$plugin['type'] = '5';
 
 // Plugin "flags" signal the presence of optional capabilities to the core plugin loader.
 // Use an appropriately OR-ed combination of these flags.
@@ -81,6 +81,7 @@ Support forum thread: http://forum.textpattern.com/viewtopic.php?id=19510
 @include_plugin('mem_postmaster_library'); // postmaster library functions
 register_callback('bab_pm_zemcontact_submit','zemcontact.submit'); // plugs into zem_contact, public-side
 if (@txpinterface == 'admin') {
+add_privs ('prefs.bab_pm', '1,2');
 	add_privs('postmaster', '1,2'); // see help for details
 	register_tab('extensions', 'postmaster', 'Postmaster');
 	register_callback('bab_postmaster', 'postmaster');
@@ -247,32 +248,25 @@ jshas;
 		$step = 'subscribers';
 	}
 	//assign all down state
-	$td_subscribers = $td_lists = $td_importexport = $td_formsend = $td_prefs = '<td class="navlink">';
+	$a_subscribers = $a_lists = $a_importexport = $a_formsend = $a_prefs = '<a class="navlink"';
 
-	$active_tab_var = 'td_' . $step;
-	$$active_tab_var = '<td class="navlink-active">';
+	$active_tab_var = 'a_' . $step;
+	$$active_tab_var = '<a class="navlink-active"';
 
 	$pm_nav = <<<pm_nav
 
-<table id="pagetop" cellpadding="0" cellspacing="0" style="padding-bottom:10px;margin-top:-20px;">
-	<tr id="nav-secondary"><td align="center" class="tabs" colspan="2">
-		<td>
-			<table id="bab_pm_nav" cellpadding="0" cellspacing="0" align="center" colspan="2" style="margin-bottom:30px;" >
-				<tr>
-				$td_subscribers<a href="?event=postmaster&step=subscribers"  class="plain">Subscribers</a></td>
-				$td_lists<a href="?event=postmaster&step=lists"  class="plain">Lists</a></td>
-				$td_importexport<a href="?event=postmaster&step=importexport"  class="plain">Import/Export</a></td>
-				$td_formsend<a href="?event=postmaster&step=formsend"  class="plain">Direct Send</a></td>
-				$td_prefs<a href="?event=postmaster&step=prefs"  class="plain">Preferences</a></td>
-				</tr>
-			</table>
-		</td>
-	</tr>
-</table>
+	<p class="nav-tertiary" align="center">
+
+				$a_subscribers href="?event=postmaster&step=subscribers"  class="plain">Subscribers</a>
+				$a_lists href="?event=postmaster&step=lists"  class="plain">Lists</a>
+				$a_importexport href="?event=postmaster&step=importexport"  class="plain">Import/Export</a>
+				$a_formsend href="?event=postmaster&step=formsend"  class="plain">Direct Send</a>
+				$a_prefs href="?event=postmaster&step=prefs"  class="plain">Preferences</a>
+</p>
 pm_nav;
 
-	echo '<div id="bab_pm_master">';
-	echo '<div id="bab_pm_nav">' . $pm_nav . '</div>';
+	echo '<div id="bab_pm_master" class="txp-layout-textbox">';
+	echo $pm_nav;
 	echo '<div id="bab_pm_content">';
 	bab_pm_ifs(); // deal with the "ifs" (if delete button pushed, etc)
 
@@ -365,7 +359,7 @@ function bab_pm_makeform()
 		echo '<form action="' . $page_url . '" method="POST" id="subscriber_edit_form">';
 
 		foreach ($bab_columns as $column) {
-			echo '<dl class="bab_pm_form_input"><dt>'.bab_pm_preferences($column).'</dt><dd>';
+			echo '<span class="bab_pm_form_input"><label>'.bab_pm_preferences($column).'</label>';
 			$bab_input_name = $bab_prefix . ucfirst($column);
 
 			switch ($column)
@@ -396,7 +390,7 @@ $(document).ready(function () {
 
 eojs;
 
-					echo $js . '<input id="'.$column.'_checkbox" type="checkbox" class="bab_pm_input" ' . $checked . '/>'.$checkbox_text.'</dd><dd>' .
+					echo $js . '<input id="'.$column.'_checkbox" type="checkbox" class="bab_pm_input" ' . $checked . '/>'.$checkbox_text.'</span>' .
 						'<input type="text" name="' . $bab_input_name . '" value="' . doSpecial(@$row[$column]) . '"' .
 							(!empty($checked) ? ' disabled="disabled"' : '') . ' />' .
 						'</dd>';
@@ -422,7 +416,7 @@ eojs;
 					echo '<input type="text" name="' . $bab_input_name . '" value="' . doSpecial(@$row[$column]) . '" class="bab_pm_input">';
 					break;
 			}
-			echo '</dd></dl>';
+			echo '</span>';
 		}
 
 		echo $bab_hidden_input;
@@ -531,10 +525,12 @@ function bab_pm_subscribers()
 
 		// add a subscriber
 
-		echo '<fieldset id="bab_pm_edit"><legend><span class="bab_pm_underhed"><a href="#" class="show">Add a Subscriber</a></span></legend><br /><div class="stuff">';
+		echo '<section role="region" id="bab_pm_add-subscriber" class="txp-details" aria-labelledby="bab_pm_add-subscriber-label">
+		<h3 id="bab_pm_list-of-subscribers-label" class="txp-summary expanded"><a href="#" role="button" class="show" aria-controls="name-of-details" aria-pressed="true">Add Subscriber</a></h3>
+		<div role="group" id="add-subscriber" class="stuff toggle" aria-expanded="true">';
 		bab_pm_makeform();
 
-		echo '</div></fieldset>';
+		echo '</div></section>';
 
 		// subscriber list
 
@@ -623,14 +619,16 @@ EOSQL;
 
 		if ($gesh) {
 			echo '<form action="' . $page_url . '" method="post" name="longform" onsubmit="return verify(\''.gTxt('are_you_sure').'\')">',
-				startTable('list'),
-				'<tr>',
+				startTable('list','','txp-list'),
+				'<thead>'
+				.'<tr>',
 				bab_pm_column_head('First Name', 'subscriberFirstName', 'postmaster', 1, ''),
 				bab_pm_column_head('Last Name', 'subscriberLastName', 'postmaster', 1, ''),
 				bab_pm_column_head('Email', 'subscriberEmail', 'postmaster', 1, ''),
 				bab_pm_column_head('Lists', 'subscriberLists', 'postmaster', 0, ''),
 				bab_pm_column_head(NULL),
-			'</tr>';
+		  	'</tr>'
+		  	. '</thead>';
 			while ($a = nextRow($gesh)) {
 				extract(doSpecial($a));
 
@@ -719,15 +717,15 @@ function bab_pm_lists()
 			echo listlist_searching_form($crit,$method);
 			if ($gesh) {
 				echo '<form action="' . @$page_url . '" method="post" name="longform" onsubmit="return verify(\''.gTxt('are_you_sure').'\')">',
-				startTable('list'),
-				'<tr>',
+				startTable('list','','txp-list'),
+				'<thead><tr>',
 					// hCell(gTxt('Edit')),
 					bab_pm_list_column_head('Name', 'listName', 'postmaster', 1, ''),
 					bab_pm_list_column_head('Admin Email', 'listAdminEmail', 'postmaster', 1, ''),
 					hCell(gTxt('Description')),
 					hCell(gTxt('List Form')),
 					bab_pm_column_head(NULL),
-				'</tr>';
+				'</tr></thead>';
 				while ($a = nextRow($gesh)) {
 					extract($a);
 					$modbox = fInput('checkbox','selected[]',$listID,'','','','','',$listID);
@@ -998,12 +996,13 @@ function bab_pm_text_input($name, $val, $size = '')
 function bab_pm_prefs()
 {
 	echo n.n.'<form method="post" action="index.php">'.
-		n.n.startTable('list').
-		n.n.tr(
+		n.n.startTable('list','','txp-list').
+    '<thead>'.
+		n.tr(
 			tdcs(
 				hed(bab_pm_gTxt('Preferences'), 1)
 			, 3)
-		);
+		).'</thead>';
 
 	$rs = safe_rows_start('*', 'txp_prefs', "prefs_id = 1 and event = 'bab_pm' order by position");
 
@@ -1540,7 +1539,8 @@ function bab_pm_ifs()
 			$sql_fields = '';
 			foreach($fields_array as $field)
 			{
-				$sql_fields .= "`{$field}` = '" . $$field . "', ";
+				$field_name = 's' . substr($field, 4);
+				$sql_fields .= "`{$field_name}` = '" . $$field . "', ";
 			}
 			$sql_fields .= "`unsubscribeID` = '{$md5}'";
 
@@ -1688,8 +1688,6 @@ $alert = bab_pm_preferences('list_edit');
 			echo "<div class=bab_pm_alerts>$alert</div>";
 		}
 	}
-
-
 # --- END PLUGIN CODE ---
 if (0) {
 ?>

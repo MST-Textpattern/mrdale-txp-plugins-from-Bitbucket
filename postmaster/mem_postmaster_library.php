@@ -17,10 +17,10 @@ $plugin['name'] = 'mem_postmaster_library';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '1.0.10';
+$plugin['version'] = '1.0.12';
 $plugin['author'] = 'Michael Manfre';
 $plugin['author_uri'] = 'http://manfre.net/';
-$plugin['description'] = 'Helper functions for the Postmaster plugin. This is a branch of Ben Bruce\'s Postmaster Plugin.';
+$plugin['description'] = 's Postmaster Plugin.';
 
 // Plugin load order:
 // The default value of 5 would fit most plugins, while for instance comment
