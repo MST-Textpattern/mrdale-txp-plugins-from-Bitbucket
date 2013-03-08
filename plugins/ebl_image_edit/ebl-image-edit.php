@@ -17,8 +17,8 @@ $plugin['name'] = 'ebl-image-edit';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '2.0';
-$plugin['author'] = 'Eric Limegrover';
+$plugin['version'] = '2.1';
+$plugin['author'] = 'Eric Limegrover + mrdale';
 $plugin['author_uri'] = 'http://www.syserror.net/';
 $plugin['description'] = 'Advanced Image Editing Plugin for Textpattern';
 
@@ -74,7 +74,7 @@ if (!defined('txpinterface'))
 if (@txpinterface == 'admin')
 	{
 		add_privs('eblimgeditext', '1'); 
-		register_tab("extensions", "eblimgeditext", "EBL Image Edit");
+		register_tab("extensions", "eblimgeditext", "Image Edit");
 		register_callback("ebl_image_edit_ext", "eblimgeditext");
 
 	switch (gps('event'))
@@ -152,15 +152,15 @@ function ebl_list_cropStyles()
 
  
 	echo n.n.hed(gTxt('Crop Styles'), 1, ' style="text-align: center; margin-top:2em; font-weight: bold;"').
-		n.n.startTable('list').
-		n.tr(
+		n.n.startTable('list','','txp-list').
+		n.'<thead>'.tr(
 			n.hCell(gTxt('name')).
 			n.hCell(gTxt('width')).
 			n.hCell().
 			n.hCell(gTxt('height')).
 			n.hCell(gTxt('thumbnail')).
 			n.hCell(gTxt('delete'))
-		);
+		).'</thead>';
 
 	$rs = safe_rows_start('*', 'ebl_crop', '1=1 ORDER BY `name`');
 
@@ -297,30 +297,30 @@ function ebl_imgcrop() {
 }
 a { padding: 0 0 3px;}
 a:visited {} a:hover {} a:active { border: 0; }
-a:focus { outline: 0; text-decoration: none;} 
+a:focus { outline: 0; text-decoration: none;}
+.jcrop-holder{margin:20px auto 40px} 
 </style>
 <script type="text/javascript">
 $(document).ready(function() { // init everything
 
-	$("#list td:first img").attr('id','mainImg'); // Give our image an ID
-	$("#list td:first").attr('id','mainImgTD'); // name the table to make it easier to find.
+$("#image_container .fullsize-image img").attr('id','mainImg'); // Give our image an ID
 
-	$('#image-thumbnail td:first img').attr('id','thumb'); // Give our thumbnail image an ID
-	$('#image-thumbnail td:first').attr('id','thumbTD'); // name the TD that contains the image so we can swap it out.
+$('.thumbnail-edit img').attr('id','thumb'); // Give our thumbnail image an ID
+$('.thumbnail-edit').attr('id','thumbTD'); // name the TD that contains the image so we can swap it out.
 
-	if(! $('#thumbTD').length ) {  $("#list td:eq(1)").attr('id','thumbTD');  }
+if(! $('#thumbTD').length ) {  $(".thumbnail-upload").attr('id','thumbTD');  }
 
-	$('#mainImgTD').prepend('<div id="eblcropui"></div>');
-	$('#eblcropui').append('<fieldset style="min-width: 500px;"><legend>Edit Image</legend><div id="eblcontainer"></div></fieldset>');
+$('#image_container').prepend('<section id="eblcropui" class="txp-edit"></section>');
+
+	$('#eblcropui').append('<section role="region" id="eblcontainer_group" class="txp-details" aria-labelledby="eblcontainer_group-label"><h3 id="eblcontainer_group-label">Edit Image</h3><div role="group" id="eblcontainer"></div></section>');
 	
-	$('#eblcontainer').css({'margin':'10px'});
 	$('#eblcontainer').append(
-						'<p>' + 
-						 '<a href="#" id="eblcroplnk" >Crop</a> | ' + 
-						 '<a href="#" id="ebltmblnk" >Thumbnail</a> | ' + 
-						 '<a href="#" id="eblrotatelnk" >Rotate</a> | ' +
-						 '<a href="#" id="eblresizelnk" >Resize</a> | ' + 
-						 '<a href="#" id="eblbackuplnk" >Backup</a>' + 
+						'<p class="nav-tertiary">' + 
+						 '<a href="#" id="eblcroplnk" class="navlink">Crop</a>' + 
+						 '<a href="#" id="ebltmblnk" class="navlink">Thumbnail</a>' + 
+						 '<a href="#" id="eblrotatelnk" class="navlink">Rotate</a>' +
+						 '<a href="#" id="eblresizelnk" class="navlink">Resize</a>' + 
+						 '<a href="#" id="eblbackuplnk" class="navlink">Backup</a>' + 
 						'</p>'
 						);
 	
@@ -335,7 +335,7 @@ $(document).ready(function() { // init everything
 	
 	$('#eblcropctrl').append(
 								'<p>Use predefined size: $customImgSize | <input name="aspectratio" type="checkbox" id="imgaspectratio" value="" /> Lock Aspect Ratio </p>' +
-								'<input type="submit" name="$id" id="eblimgcrop" value="Crop Original" class="smallerbox" />'
+								'<p><input type="submit" name="$id" id="eblimgcrop" value="Crop Original" class="smallerbox" /></p>'
 							);
 	
 	$('#ebltmbctrl').append(					     	
@@ -605,8 +605,8 @@ function addCrop() {
 				$('#eblimgprocess').hide();
 				if(html.match(/success/)) {
 					removeCrop();
-					$('#thumbTD').empty().append('<img src="$tmbsrc?' + rand +'" id="thumb" />');
-					$('#ebltmbctrl').toggle();
+         $('#thumbTD #thumb').remove();
+                    $('#thumbTD').prepend('<img src="$tmbsrc?' + rand +'" id="thumb" class="content-image" />');					$('#ebltmbctrl').toggle();
 				} else {
 					alert(html);
 				}
@@ -999,7 +999,7 @@ if (0) {
 <div id="main">
 <h1>EBL Image Edit</h1>
  <h2>Advanced Image Editing Plugin for Textpattern</h2>
- <p><span class="dropcap">T</span>his plugin introduces advanced image editing functionality to Textpattern 4.07 / 4.08.
+ <p><span class="dropcap">T</span>his plugin introduced advanced image editing functionality to Textpattern 4.07 and has now been updated to work nicely with the Hive theme of Textpattern 4.6.
  Users may now custom crop, resize, rotate, and create custom thumbnails directly within Textpattern.</p>
 
  <h3>Features</h3>
