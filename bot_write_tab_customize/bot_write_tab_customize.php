@@ -17,8 +17,8 @@ $plugin['name'] = 'bot_write_tab_customize';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.7.2';
-$plugin['author'] = 'redbot';
+$plugin['version'] = '0.7.3';
+$plugin['author'] = 'redbot (mod mrdale)';
 $plugin['author_uri'] = 'http://www.redbot.it/txp';
 $plugin['description'] = 'Rearrange and style items in the write tab';
 
@@ -345,7 +345,7 @@ function bot_wtc_install()
 
 
 function bot_wtc_update() // updates cfs selectors in db | introduced in bot_wtc 0.7.1
-{ 
+{
 	if (!bot_wtc_check_install()) { // poceeds only if plugin is already installed
 		return;
 	}
@@ -921,7 +921,7 @@ function bot_wtc_css() { // css for the plugin tab under extensions
 				text-align: center;	margin:20px auto; padding-bottom:10px;
 			}
 			#bot_controls {
-				margin: 20px auto; 
+				margin: 20px auto;
 			}
 			#bot_controls a{margin-right:-5px}
 			#bot_expand_all,
@@ -934,7 +934,7 @@ function bot_wtc_css() { // css for the plugin tab under extensions
 			}
 			#bot_wtc_table td {
 				vertical-align:center;
-				padding:5px; 
+				padding:5px;
 				white-space:nowrap;
 			}
 			#bot_wtc_table td p{margin:3px 0 0 0}
@@ -1136,7 +1136,6 @@ function bot_wtc()
 	};
 
 }
-
 # --- END PLUGIN CODE ---
 if (0) {
 ?>
