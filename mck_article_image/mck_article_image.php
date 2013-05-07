@@ -80,11 +80,10 @@ if (txpinterface == 'admin'){
 //insert icon for calling jquery
 register_callback('mck_list_image_add_call','article_ui','article_image');
 //insert script for using img
-register_callback('mck_image_js','article');
+register_callback('mck_image_js','admin_side', "head_end");
 //insert css for floating div
 register_callback('mck_image_css','admin_side','head_end');
 }
-
 //---------------------------------------------------------
 /**
 	Generates and stores the images required by the design.
@@ -191,6 +190,10 @@ if(!empty($rs['Image'])){
 	Print on the page the JS code that use Jquery to work with images
 */
 function mck_image_js(){
+global $event;
+if($event !== 'article') {
+	return;
+}
 global $prefs;
   echo <<<JS_CODE
   <script type="text/javascript">
