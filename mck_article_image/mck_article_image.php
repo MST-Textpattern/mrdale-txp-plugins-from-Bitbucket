@@ -294,12 +294,14 @@ function mck_image_css(){
 echo '
 <style type="text/css">
 div#image_group{position:relative;} /*Original TXP Hacking*/
-#mck_images_window{position:absolute;z-index:99;top:0px;left:200px;width:637px;height:380px;}
-#mck_images_list{margin:0;width:635px;height:320px;overflow:auto;}
+#mck_images_window{margin:0 !important;padding:5%;position:absolute;z-index:9999999;top:-5px !important;left:0px;width:100%;height:100%;background:rgba(0,0,0,.7)}
+#mck_images_list{margin:0;width:95%;height:95%;overflow:auto;}
 #mck_images_list img{border:1px solid #ccc;margin:5px;cursor:pointer;}
 #mck_images_list span{position:relative;}
 #mck_images_list ins{position:absolute;left:5px;top:-17px;background:#fff;padding:2px 5px;border:1px solid #ccc;}
 #mck_images_list ins.selected {background:#FABF2D;}
+#mck_images_window legend{float:left;margin:-2% 0 2% -0; color:white;}
+#mck_images_window legend select{width:120px;}
 </style>';
 }
 # --- END PLUGIN CODE ---
