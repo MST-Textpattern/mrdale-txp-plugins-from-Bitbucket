@@ -302,6 +302,7 @@ div#image_group{position:relative;} /*Original TXP Hacking*/
 #mck_images_list ins.selected {background:#FABF2D;}
 #mck_images_window legend{float:left;margin:-2% 0 2% -0; color:white;}
 #mck_images_window legend select{width:120px;}
+#mck_images_window .txp-buttons{position:absolute;top:2%;left:250px;}
 </style>';
 }
 # --- END PLUGIN CODE ---
