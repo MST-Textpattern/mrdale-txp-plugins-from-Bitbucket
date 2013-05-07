@@ -77,9 +77,9 @@ if(@txpinterface == 'admin') {
 	register_tab('extensions', 'bot_wtc_tab', 'Write tab customize');
 	register_callback('bot_wtc_tab', 'bot_wtc_tab');
 	register_callback('bot_wtc_css','admin_side','head_end');
-	register_callback('bot_wtc', 'article');
-	register_callback('bot_hide_per_section', 'article');
-	register_callback('bot_hidden_sections', 'article');
+	register_callback('bot_wtc', 'admin_side', 'head_end');
+	register_callback('bot_hide_per_section', 'admin_side', 'head_end');
+	register_callback('bot_hidden_sections', 'admin_side', 'head_end');
 	register_callback('bot_wtc_update','plugin_lifecycle.bot_write_tab_customize', 'enabled');
 }
 
@@ -145,7 +145,10 @@ natcasesort($bot_items);
 
 
 function bot_wtc_gTxt($what) {
-
+global $event;
+if($event !== 'article') {
+	return;
+}
 	global $language;
 
 	$en_us = array(
@@ -346,6 +349,10 @@ function bot_wtc_install()
 
 function bot_wtc_update() // updates cfs selectors in db | introduced in bot_wtc 0.7.1
 {
+global $event;
+if($event !== 'article') {
+	return;
+}
 	if (!bot_wtc_check_install()) { // poceeds only if plugin is already installed
 		return;
 	}
@@ -1044,7 +1051,10 @@ function bot_wtc_jquery_restore_rows(){ // js rows to restore every previously h
 
 
 function bot_hide_per_section(){ //  builds the script
-
+global $event;
+if($event !== 'article') {
+	return;
+}
     $bot_hide_per_section = bot_hide_per_section_array();
 	if ($bot_hide_per_section) { // output js only if values exist
 		 	echo
