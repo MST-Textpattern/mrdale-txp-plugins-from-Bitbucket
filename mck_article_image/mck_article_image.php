@@ -294,15 +294,15 @@ function mck_image_css(){
 echo '
 <style type="text/css">
 div#image_group{position:relative;} /*Original TXP Hacking*/
-#mck_images_window{margin:0 !important;padding:5%;position:absolute;z-index:9999999;top:-5px !important;left:0px;width:100%;height:100%;background:rgba(0,0,0,.7)}
+#mck_images_window{margin:0 !important;padding:50px 5% 5% 5%;position:absolute;z-index:9999999;top:-5px !important;left:0px;width:100%;height:100%;background:rgba(0,0,0,.7)}
 #mck_images_list{margin:0;width:95%;height:95%;overflow:auto;}
 #mck_images_list img{border:1px solid #ccc;margin:5px;cursor:pointer;}
 #mck_images_list span{position:relative;}
 #mck_images_list ins{position:absolute;left:5px;top:-17px;background:#fff;padding:2px 5px;border:1px solid #ccc;}
 #mck_images_list ins.selected {background:#FABF2D;}
-#mck_images_window legend{float:left;margin:-2% 0 2% -0; color:white;}
-#mck_images_window legend select{width:120px;}
-#mck_images_window .txp-buttons{position:absolute;top:2%;left:250px;}
+#mck_images_window legend{float:left;margin:-25px 0 25px 0; color:white;}
+#mck_images_window legend select{margin-left:15px;width:150px;}
+#mck_images_window .txp-buttons{margin:0;position:absolute;top:26px;left:350px;}
 </style>';
 }
 # --- END PLUGIN CODE ---
