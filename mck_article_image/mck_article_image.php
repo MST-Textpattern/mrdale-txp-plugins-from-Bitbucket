@@ -130,7 +130,7 @@ $cl[]='<option>'.$cat['name'].'</option>';
 
 //   Extract all image that have a thumbnail
   $qimg = safe_rows('id,name,ext,thumb_w,thumb_h,category,alt', 'txp_image','thumbnail=1 ORDER BY id DESC');
-  $out[]='<legend>'.gtxt('category').': <select>'.join('',$cl).'</select></legend><div id="mck_images_list">';
+  $out[]='<div id="mck_controls"><a id="mck_close" href="#" title="Close">×</a></span><span><label>'.gtxt('category').': <select>'.join('',$cl).'</select></span><p class="txp-buttons"><a href="#" class="mck_update">'.gtxt('update').'</a></p></div><div id="mck_images_list">';
   //set initial variable
   foreach ($qimg as $image){
   //if checked set variable
@@ -139,7 +139,7 @@ $cl[]='<option>'.$cat['name'].'</option>';
   $out[] = '<span><img src="'.imagesrcurl($image['id'], $image['ext'], true).'" alt="'.$image['alt'].'" title="'.imagesrcurl($image['id'], $image['ext'], true).'"'. //($image['thumb_w'] ? "width='$image[thumb_w]' height='$image[thumb_h]'" : ''). ' />
   'width="100px" height="100px" class="'.$image['category'].' content-image '.$high.'" id="'.$image['id'].'" /><ins class="'.$high.'">#'.$image['id'].'</ins></span>';
   }
-  $out[]='</div><p class="txp-buttons"><a href="#" class="mck_update">'.gtxt('update').'</a></p>';
+  $out[]='</div>';
   ob_start();
   ob_end_clean();
   header('Content-type: text/html');
@@ -220,6 +220,11 @@ $(document).ready(function() {
             }
         });
     });
+    
+    //We should have a close button
+    wrapper.on('click', '#mck_close', function() {
+      $('#mck_images_window').toggle('slow');
+    });
 
     //get category select
     //If empty show all images else hide images on different category
@@ -258,7 +263,8 @@ $(document).ready(function() {
         $('#mck_images_window').toggle('slow');
         ch = '';
     });
-
+    
+  
     //update article image preview
     $("#article-image").change(function() {
         var values = $(this).val().split(',');
@@ -293,16 +299,19 @@ JS_CODE;
 function mck_image_css(){
 echo '
 <style type="text/css">
-div#image_group{position:relative;} /*Original TXP Hacking*/
-#mck_images_window{margin:0 !important;padding:50px 5% 5% 5%;position:absolute;z-index:9999999;top:-5px !important;left:0px;width:100%;height:100%;background:rgba(0,0,0,.7)}
-#mck_images_list{margin:0;width:95%;height:95%;overflow:auto;}
-#mck_images_list img{border:1px solid #ccc;margin:5px;cursor:pointer;}
+#mck_images_window{  margin:0 !important;  padding:50px 5% 5% 5%;  position:absolute;  z-index:9999999;  top:-5px !important;  left:0px;  width:100%;  height:100%;  background:rgba(0,0,0,.8);}
+#mck_images_list{  margin:0;  width:95%;  height:95%;  overflow:auto;}
+#mck_images_list img{border:1px solid #ccc;  margin:5px;  cursor:pointer;  opacity:.8;}
+#mck_images_list img:hover{opacity:1;}
 #mck_images_list span{position:relative;}
-#mck_images_list ins{position:absolute;left:5px;top:-17px;background:#fff;padding:2px 5px;border:1px solid #ccc;}
-#mck_images_list ins.selected {background:#FABF2D;}
-#mck_images_window legend{float:left;margin:-25px 0 25px 0; color:white;}
-#mck_images_window legend select{margin-left:15px;width:150px;}
-#mck_images_window .txp-buttons{margin:0;position:absolute;top:26px;left:350px;}
+#mck_images_list ins{position:absolute;  left:10px;  top:auto;  bottom:13px;  background:#fff;  padding:2px 5px;  border:1px solid #ccc;  text-decoration:none;}
+#mck_images_list ins a{}
+#mck_images_list ins.selected {  background:#FABF2D;}
+#mck_controls{  float:left;  margin:-20px 0 20px 0;   color:white;}
+#mck_controls select{margin-left:15px;width:auto;}
+#mck_controls .txp-buttons{  margin:0 0 0 20px;;  float:left;  clear:none;}
+#mck_controls span{float:left;}
+#mck_close {float:left;width:auto !important;background: none repeat scroll 0 0 #FFFFFF;border: 1px solid #CCCCCC;color: #222222;cursor: pointer;display: inline-block;font: bold 1em Verdana,Arial,sans-serif;padding: 3px 10px 6px;margin-right:10px;position: relative;text-align: center;text-decoration: none;vertical-align: bottom;z-index: 3333;border-radius: 15px 15px 15px 15px !important;}
 </style>';
 }
 # --- END PLUGIN CODE ---
