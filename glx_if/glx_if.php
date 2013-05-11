@@ -96,24 +96,6 @@ function glx_if_section_frontpage($atts, $thing)
   return parse(EvalElse($thing, $condition));
 }
 
-function hak_wine_val($atts, $thing='')
-{
-	global $zem_contact_values, $thiswineitem;
-
-	extract(lAtts(array(
-			'name'	=>	'',
-			'wraptag'	=>	'',
-	),$atts));
-
-	if (empty($name) && is_array($thiswineitem))
-		return $thiswineitem['quantity'];
-
-	if (!isset($zem_contact_values[$name]))
-		return '';
-
-	return $zem_contact_values[$name];
-}
-
 function glx_if_not_section_frontpage($atts, $thing)
 {
     global $pretext, $is_article_list;
