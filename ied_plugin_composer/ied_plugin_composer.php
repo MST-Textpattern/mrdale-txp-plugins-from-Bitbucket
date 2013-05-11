@@ -54,18 +54,114 @@ $plugin['flags'] = '3';
 // #@language ISO-LANGUAGE-CODE
 // abc_string_name => Localized String
 
-/** Uncomment me, if you need a textpack
-$plugin['textpack'] = <<< EOT
-#@admin
-#@language en-gb
-abc_sample_string => Sample String
-abc_one_more => One more
-#@language de-de
-abc_sample_string => Beispieltext
-abc_one_more => Noch einer
+$plugin['textpack'] = <<<EOT
+#@ied_plugin
+ied_plugin_any => Any
+ied_plugin_auto_enable => Auto-enable plugins on install
+ied_plugin_cacheplugs_legend => Plugins in cache folder
+ied_plugin_cache_not_set => Advanced pref "plugin cache directory" not defined
+ied_plugin_check_type => Check your plugin type!
+ied_plugin_choose_file => Please choose a file first
+ied_plugin_code_dist => Plugin code for distribution
+ied_plugin_code_legend => Plugin code
+ied_plugin_code_save => Save code
+ied_plugin_code_saved => Code saved
+ied_plugin_code_saved_fail => Code saving failed
+ied_plugin_compress => Zip
+ied_plugin_cpanel_legend => Installation
+ied_plugin_create_new => Create new plugin
+ied_plugin_dbplugs_legend => Plugins in database
+ied_plugin_docs => Docs
+ied_plugin_docs_legend => Plugin help
+ied_plugin_edit => Edit: {name} v{version}
+ied_plugin_editing => Editing {name} in Plugin Composer
+ied_plugin_editor => Plugin editor
+ied_plugin_editor_options => Plugin editor configuration options
+ied_plugin_editor_path => Plugin editor URL
+ied_plugin_editor_width => Plugin editor width
+ied_plugin_edit_new => Edit your new plugin
+ied_plugin_enable => Enabled
+ied_plugin_export => Export as {name}
+ied_plugin_export_textpack => Export textpack(s)
+ied_plugin_export_zip => Export as {name} (compressed)
+ied_plugin_flags => Flags
+ied_plugin_flag_has_prefs => Has prefs
+ied_plugin_flag_lifecycle_notify => Event notify
+ied_plugin_fn_not_exist => (the function is probably javascript or mangled PHP)
+ied_plugin_help_editor => Help editor
+ied_plugin_help_editor_options => Help editor configuration options
+ied_plugin_help_editor_path => Help editor URL
+ied_plugin_help_not_available => Plugin help not available
+ied_plugin_if_el_dist => Code for distribution
+ied_plugin_if_el_style => Help style block
+ied_plugin_if_settings => Interface settings
+ied_plugin_install_textpack => Install file's Textpack
+ied_plugin_install_txt => Install from .txt file
+ied_plugin_interface_elems => Optional interface elements
+ied_plugin_jump_to_line => Jump to line:
+ied_plugin_langs_all => All available
+ied_plugin_langs_installed => Only installed
+ied_plugin_lang_choose => Textpack language list
+ied_plugin_lang_default => Default textpack language
+ied_plugin_lbl_composer => Plugin composer
+ied_plugin_lbl_lc_delete => Delete
+ied_plugin_lbl_lc_disable => Disable
+ied_plugin_lbl_lc_disdel => Disable+Delete
+ied_plugin_lbl_lc_enable => Enable
+ied_plugin_lbl_lc_instable => Install+Enable
+ied_plugin_lbl_lc_install => Install
+ied_plugin_lbl_op_code_first => Code first
+ied_plugin_lbl_op_help_first => Help first
+ied_plugin_lbl_setup => Plugin composer setup
+ied_plugin_lc_fired => Lifecycle event {event} fired for {name}
+ied_plugin_lifecycle => Fire lifecycle event
+ied_plugin_lifecycle_options => Perform lifecycle actions on
+ied_plugin_load => Load
+ied_plugin_load_order => Load order
+ied_plugin_load_order_help => (1=first > 5=normal > 9=last)
+ied_plugin_meta_legend => Meta information
+ied_plugin_msgpop_lbl => phpdoc block
+ied_plugin_name_first => Please name the plugin before creating it
+ied_plugin_output_order => PHP export order
+ied_plugin_output_sfile => Export plugin filename format
+ied_plugin_output_sfilec => Export compressed filename format
+ied_plugin_output_sfilep => Plugin template filename format
+ied_plugin_output_sfilet => Textpack filename format
+ied_plugin_output_tmpcache => Cache Textiled help path
+ied_plugin_php_doc => Make phpdoc
+ied_plugin_prefs => Preferences
+ied_plugin_prefs_deleted => Preferences deleted
+ied_plugin_renamed => (renamed)
+ied_plugin_rename_failed => (rename failed)
+ied_plugin_rename_file => Rename file
+ied_plugin_restored => Plugin {name} restored.
+ied_plugin_restore_help => Roll back the plugin code to the most recent restore point
+ied_plugin_restore_point => Restore point
+ied_plugin_restore_verify => Are you sure you want to rollback the {name} source code to its last restore point?
+ied_plugin_run_from => Plugins running from cache
+ied_plugin_run_install => Perform post-install actions
+ied_plugin_same => Same
+ied_plugin_save_as => Save as {name}
+ied_plugin_setup => Setup
+ied_plugin_syntax_check => Syntax check on code save
+ied_plugin_syntax_err => Syntax error
+ied_plugin_toggle => Toggle
+ied_plugin_tp_legend => Textpack strings
+ied_plugin_tp_populate => Load strings from function
+ied_plugin_tp_prefix => Textpack prefix
+ied_plugin_type => Plugin type
+ied_plugin_type_0 => Public
+ied_plugin_type_1 => Admin + Public
+ied_plugin_type_2 => Library
+ied_plugin_type_3 => Admin only
+ied_plugin_type_4 => Admin (+AJAX)
+ied_plugin_type_5 => Admin + Public (+AJAX)
+ied_plugin_updated => Plugin {name} updated
+ied_plugin_uploaded => Plugin {name} uploaded
+ied_plugin_upload_php => Upload plugin
+ied_plugin_utils_legend => Distribution (only for use after saving)
+ied_plugin_view_help => Help: {name}
 EOT;
-**/
-// End of textpack
 
 if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
@@ -88,7 +184,11 @@ if (!defined('txpinterface'))
  */
 
 // TODO:
-//  * fire lifecycle events for testing
+//  * Use href() (from 4.6.+) for anchor creation to avoid double-encoded ampersands
+//  * Figure out why syntax checker doesn't jump to line number sometimes (AJAX fails with error but it's not handled)
+//  * Fix CSS/Markup so Textpack strings twisty label doesn't range right
+//  * Show which langs have installed strings in the distribution section so the correct langs in the select list can be chosen
+//  * Find out why uploading PHP files sometiems throws an error even though it succeeds
 //  * jQuery on editor dropdowns in setup
 //  * phpdoc
 
@@ -256,63 +356,67 @@ function ied_plugin_list($message='') {
 	$switch_dir = ($dir == 'desc') ? 'asc' : 'desc';
 
 	// Top control-panel part of screen
-	echo '<h1 class="txp-heading">'.gTxt('ied_plugin_lbl_composer').sp.ied_plugin_anchor($ied_pc_event, 'ied_plugin_help_viewer', '?', array('name' => 'ied_plugin_composer'), array('class' => 'pophelp')).'</h1>',
-		n, '<div id="ied_plugin_control" class="txp-control-panel">',
-		n, sLink($ied_pc_event, 'ied_plugin_prefs', gTxt('ied_plugin_setup'), 'ied_plugin_setup'),
-		n, '<div class="summary-details"><h3 class="lever txp-summary'.(get_pref('pane_ied_plugin_cpanel_visible') ? ' expanded' : '').'"><a href="#ied_plugin_cpanel">' . gTxt('ied_plugin_cpanel_legend') . '</a></h3><div id="ied_plugin_cpanel" class="toggle" style="display:'.(get_pref('pane_ied_plugin_cpanel_visible') ? 'block' : 'none').'">',
-		n, '<form class="ied_plugin_form" enctype="multipart/form-data" action="index.php" method="post">',
-		n, '<p>',
-		n, '<label for="ied_plugin_newname" class="ied_label">'.gTxt('name').'</label>',
-		n, fInput('text', 'name', '', '', '', '', INPUT_REGULAR, '', 'ied_plugin_newname'),
-		n, fInput('submit', 'plugin_create', gTxt('ied_plugin_create_new')),
-		n, '</p>',
-		n, '<p>',
-		n, '<label for="ied_plugin_file" class="ied_label">'.gTxt('ied_plugin_upload_php').'</label>',
-		n, fInput('file', 'thefile', '', '', '', '', '', '', 'ied_plugin_file'),
-		n, fInput('submit', 'plugin_upload', gTxt('upload')),
-		n, '</p>',
-		n, '<p>',
-		n, '<label for="ied_plugin64" class="ied_label">'.gTxt('ied_plugin_install_txt').'</label>',
-		n, text_area('plugin64', '', '', '', 'ied_plugin64'),
-		n, fInput('submit', 'plugin_install', gTxt('install')),
-		n, '</p>',
-		n, join(n, $cbout),
-		n, eInput($ied_pc_event),
-		n, sInput('ied_plugin_create'),
-		n, hInput('MAX_FILE_SIZE', 1000000),
-		n, tInput(),
-		n, '</form>',
-		n, '</div>',
-		n, '</div>',
-		n, '</div>';
+	echo '<h1 class="txp-heading">'.gTxt('ied_plugin_lbl_composer').sp.ied_plugin_anchor($ied_pc_event, 'ied_plugin_help_viewer', '?', array('name' => 'ied_plugin_composer'), array('class' => 'pophelp')).'</h1>'.
+		n. '<div id="ied_plugin_control" class="txp-control-panel">'.
+		n. sLink($ied_pc_event, 'ied_plugin_prefs', gTxt('ied_plugin_setup'), 'ied_plugin_setup').
+		n. '<div class="summary-details"><h3 class="lever txp-summary'.(get_pref('pane_ied_plugin_cpanel_visible') ? ' expanded' : '').'"><a href="#ied_plugin_cpanel">' . gTxt('ied_plugin_cpanel_legend') . '</a></h3><div id="ied_plugin_cpanel" class="toggle" style="display:'.(get_pref('pane_ied_plugin_cpanel_visible') ? 'block' : 'none').'">'.
+		n. '<form class="ied_plugin_form" enctype="multipart/form-data" action="index.php" method="post">'.
+		n. '<p>'.
+		n. '<label for="ied_plugin_newname" class="ied_label">'.gTxt('name').'</label>'.
+		n. fInput('text', 'name', '', '', '', '', INPUT_REGULAR, '', 'ied_plugin_newname').
+		n. fInput('submit', 'plugin_create', gTxt('ied_plugin_create_new')).
+		n. '</p>'.
+		n. '<p>'.
+		n. '<label for="ied_plugin_file" class="ied_label">'.gTxt('ied_plugin_upload_php').'</label>'.
+		n. fInput('file', 'thefile', '', '', '', '', '', '', 'ied_plugin_file').
+		n. fInput('submit', 'plugin_upload', gTxt('upload')).
+		n. '</p>'.
+		n. '<p>'.
+		n. '<label for="ied_plugin64" class="ied_label">'.gTxt('ied_plugin_install_txt').'</label>'.
+		n. text_area('plugin64', '', '', '', 'ied_plugin64').
+		n. fInput('submit', 'plugin_install', gTxt('install')).
+		n. '</p>'.
+		n. join(n, $cbout).
+		n. eInput($ied_pc_event).
+		n. sInput('ied_plugin_create').
+		n. hInput('MAX_FILE_SIZE', 1000000).
+		n. tInput().
+		n. '</form>'.
+		n. '</div>'.
+		n. '</div>'.
+		n. '</div>';
 
 	// Main plugin list
-	echo n, '<div id="ied_plugin_container" class="txp-container">',
-		n, '<form action="index.php" id="ied_plugin_form" class="multi_edit_form" method="post">',
-		n, '<div class="txp-listtables">',
-		n, startTable('', '', 'txp-list');
+	echo n. '<div id="ied_plugin_container" class="txp-container">';
 
 	$rs = safe_rows('*', 'txp_plugin', '1=1 ORDER BY '.$sort_sql);
 
 	if ($rs) {
-		echo n.'<thead>',
-		n, tr(
+		echo '<div class="summary-details">'.
+			n. '<form action="index.php" id="ied_plugin_db_form" method="post">'.
+			n. '<h3 class="lever txp-summary'.(get_pref('pane_ied_plugin_dbplugs_visible') ? ' expanded' : '').'">'.
+			n. '<a href="#ied_plugin_dbplugs">' . gTxt('ied_plugin_dbplugs_legend') . '</a>'.
+			n. '</h3>'.
+			n. '<div id="ied_plugin_dbplugs" class="toggle" style="display:'.(get_pref('pane_ied_plugin_dbplugs_visible') ? 'block' : 'none').'">'.
+		n. '<div class="txp-listtables">'.
+		n. startTable('', '', 'txp-list').
+		n.'<thead>'.
+		n. tr(
 			n.hCell(fInput('checkbox', 'select_all', 0, '', '', '', '', '', 'select_all'), '', ' title="'.gTxt('toggle_all_selected').'" class="multi-edit"')
 			.n.column_head('plugin', 'name', 'ied_plugin_composer', true, $switch_dir, '', '', (('name' == $sort) ? "$dir " : '').'name')
 			.n.column_head('author', 'author', 'ied_plugin_composer', true, $switch_dir, '', '', (('author' == $sort) ? "$dir " : '').'author')
 			.n.column_head(gTxt('version').' ('.gTxt('plugin_modified').')', 'version', 'ied_plugin_composer', true, $switch_dir, '', '', (('version' == $sort) ? "$dir " : '').'version')
 			.n.hCell(gTxt('description'), '', ' class="description"')
 			.n.hCell(gTxt('manage'), '', ' class="manage"')
-			.n.column_head('order', 'load_order', 'ied_plugin_composer', true, $switch_dir, '', '', (('load_order' == $sort) ? "$dir " : '').'load-order')
 			.n.column_head('active', 'status', 'ied_plugin_composer', true, $switch_dir, '', '', (('status' == $sort) ? "$dir " : '').'status')
-		),
-		n, '</thead>',
-		n, '<tbody>';
+		).
+		n. '</thead>'.
+		n. '<tbody>';
+
 		foreach ($rs as $row) {
 			extract($row);
 			$ename = ied_plugin_anchor($ied_pc_event, 'ied_plugin_edit', $name, array('name' => $name));
 			$hlink = ($help) ? ied_plugin_anchor($ied_pc_event, 'ied_plugin_help_viewer', gTxt('ied_plugin_docs'), array('name' => $name)) : gTxt('none');
-			$oLink = ied_plugin_order_form($name, $load_order);
 			$fnames = ied_plugin_get_name($name, $version);
 			$pubtag = ied_plugin_anchor($ied_pc_event, 'ied_plugin_save_as_file', gTxt('publish'), array('name' => $name), array('title' => gTxt('ied_plugin_export', array('{name}' => $fnames[0]))));
 			$pubztag = ied_plugin_anchor($ied_pc_event, 'ied_plugin_save_as_file', gTxt('ied_plugin_compress'), array('name' => $name, 'zip' => 'true'), array('title' => gTxt('ied_plugin_export', array('{name}' => $fnames[1]))));
@@ -328,12 +432,18 @@ function ied_plugin_list($message='') {
 				.n.td(( ($modified) ? ied_plugin_anchor($ied_pc_event, 'ied_plugin_restore', $version, array('name' => $name), array('title' => gTxt('ied_plugin_restore_help'), 'onclick' => 'return verify(\''.gTxt('ied_plugin_restore_verify', array('{name}' => $name)).'\');')) : $version) . (($modified) ? sp.'('.gTxt('yes').')' : ''))
 				.n.td(txpspecialchars($description))
 				.n.td($pubtag .sp. '&#124;' .sp. $pubztag .sp. '&#124;' .sp. $hlink)
-				.n.td($oLink)
 				.n.td(ied_plugin_status_link($status,$name,yes_no($status)))
 			);
 			unset($name,$page);
 		}
-		echo n, '</tbody>';
+		echo n. '</tbody>'.
+			n. endTable().
+			n. '</div>'.
+			n. tInput().
+			n. '</form>'.
+			ied_plugin_multiedit_form('db', '', $sort, $dir, '', '').
+			n. '</div>'.
+			n. '</div>';
 	}
 
 	if (!empty($prefs['plugin_cache_dir']) && file_exists($prefs['plugin_cache_dir'])) {
@@ -390,29 +500,54 @@ function ied_plugin_list($message='') {
 						)
 						.sp. '&#124;' .sp. $hlink
 					)
-					.n.td('')
-					.n.td('')
 				);
 			}
 		}
+
 		if ($out) {
-			echo n, '<tbody>',
-				n, tr(
-					tda(
-					tag(gTxt('ied_plugin_run_from', array('{dir}' => tag('plugin_cache_dir','acronym',' title="'.$prefs['plugin_cache_dir'].'"')), 'raw'), 'h1')
-					,' colspan="8"')
-				),
-				n, assHead('', 'plugin', 'author', 'version', 'description', 'manage', '', ''),
-				n, join(n, $out),
-				n, '</tbody>';
+			echo '<div class="summary-details">'.
+				n. '<form action="index.php" id="ied_plugin_cache_form" method="post">'.
+					n. '<h3 class="lever txp-summary'.(get_pref('pane_ied_plugin_cacheplugs_visible') ? ' expanded' : '').'">'.
+					n. '<a href="#ied_plugin_cacheplugs">' . gTxt('ied_plugin_cacheplugs_legend') . '</a>'.
+					n. '</h3>'.
+					n. '<div id="ied_plugin_cacheplugs" class="toggle" style="display:'.(get_pref('pane_ied_plugin_cacheplugs_visible') ? 'block' : 'none').'">'.
+				n. '<div class="txp-listtables ied_plugin_cacheplugs">'.
+				n.startTable('', '', 'txp-list').
+				n. '<thead>'.
+				n. tr(
+					n.hCell(fInput('checkbox', 'select_all', 0, '', '', '', '', '', 'select_all'), '', ' title="'.gTxt('toggle_all_selected').'" class="multi-edit"')
+					.n.hCell(gTxt('plugin'), '', ' class="name"')
+					.n.hCell(gTxt('author'), '', ' class="author"')
+					.n.hCell(gTxt('version') . ' ('.gTxt('plugin_modified').')', '', ' class="version"')
+					.n.hCell(gTxt('description'), '', ' class="description"')
+					.n.hCell(gTxt('manage'), '', ' class="manage"')
+				).
+				n. '</thead>'.
+				n. '<tbody>'.
+				n. join(n, $out).
+				n. '</tbody>'.
+				n. endTable().
+				n. '</div>'.
+				n. tInput().
+				n. '</form>'.
+				ied_plugin_multiedit_form('cache', '', $sort, $dir, '', '').
+				n. '</div>'.
+				n. '</div>';
 		}
 	}
 
-	echo n, endTable(),
-		n, ied_plugin_multiedit_form('', $sort, $dir, '', ''),
-		n, '</div>',
-		n, '</form>',
-		n, '</div>';
+	echo '</div>'.
+		n. script_js( <<<EOS
+			$(document).ready(function() {
+				$('#ied_plugin_db_form').txpMultiEditForm({
+					'checkbox' : 'input[name="selected[]"][type=checkbox]'
+				});
+				$('#ied_plugin_cache_form').txpMultiEditForm({
+					'checkbox' : 'input[name="selected-cache[]"][type=checkbox]'
+				});
+			});
+EOS
+				);
 
 	// Show/hide "Options" link by setting the appropriate class on the plugin's TR
 	echo script_js(<<<EOS
@@ -424,17 +559,34 @@ EOS
 }
 
 // -------------------------------------------------------------
-function ied_plugin_multiedit_form($page, $sort, $dir, $crit, $search_method) {
+function ied_plugin_multiedit_form($flavour, $page, $sort, $dir, $crit, $search_method) {
 	global $ied_pc_event;
 
 	$orders = selectInput('order', array(1=>1, 2=>2, 3=>3, 4=>4, 5=>5, 6=>6, 7=>7, 8=>8, 9=>9), 5, false);
-	$stati = selectInput('switch_status', array('toggle' => gTxt('toggle'), 'on' => gTxt('on'), 'off' => gTxt('off')), 'toggle', false);
+	$stati = selectInput('switch_status', array('toggle' => gTxt('ied_plugin_toggle'), 'on' => gTxt('on'), 'off' => gTxt('off')), 'toggle', false);
+	$lifecycles = selectInput('ied_lc_event', array(
+		'installed'         => gTxt('ied_plugin_lbl_lc_install'),
+		'enabled'           => gTxt('ied_plugin_lbl_lc_enable'),
+		'installed,enabled' => gTxt('ied_plugin_lbl_lc_instable'),
+		'disabled'          => gTxt('ied_plugin_lbl_lc_disable'),
+		'deleted'           => gTxt('ied_plugin_lbl_lc_delete'),
+		'disabled,deleted'  => gTxt('ied_plugin_lbl_lc_disdel'),
+	));
 
-	$methods = array(
-		'changestatus' => array('label' => gTxt('changestatus'), 'html' => $stati),
-		'changeorder'  => array('label' => gTxt('changeorder'), 'html' => $orders),
-		'delete'       => gTxt('delete')
-	);
+	if ($flavour === 'db') {
+		$methods = array(
+			'changestatus' => array('label' => gTxt('changestatus'), 'html' => $stati),
+			'changeorder'  => array('label' => gTxt('changeorder'), 'html' => $orders),
+			'lifecycle'    => array('label' => gTxt('ied_plugin_lifecycle'), 'html' => $lifecycles),
+			'delete'       => gTxt('delete'),
+		);
+	} else {
+		$methods = array(
+			'lifecycle' => array('label' => gTxt('ied_plugin_lifecycle'), 'html' => $lifecycles),
+			'textpack'  => array('label' => gTxt('ied_plugin_install_textpack')),
+			'delete'    => gTxt('delete'),
+		);
+	}
 
 	return multi_edit($methods, $ied_pc_event, 'ied_plugin_multi_edit', $page, $sort, $dir, $crit, $search_method);
 }
@@ -503,6 +655,15 @@ function ied_plugin_multi_edit() {
 				$order = min(max(intval(ps('order')), 1), 9);
 				safe_update('txp_plugin', 'load_order = '.$order, $where);
 				break;
+
+			case 'lifecycle':
+				$lc_evs = do_list(ps('ied_lc_event'));
+				foreach ($selected as $name) {
+					foreach ($lc_evs as $lc_ev) {
+						callback_event("plugin_lifecycle.$name", $lc_ev);
+					}
+				}
+				break;
 		}
 	} else {
 		$selected = array();
@@ -513,8 +674,7 @@ function ied_plugin_multi_edit() {
 		switch ($method)
 		{
 			case 'delete':
-				foreach ($selected_cache as $name)
-				{
+				foreach ($selected_cache as $name) {
 					$filenames = array();
 					$dir = dir($prefs['plugin_cache_dir']);
 					while ($file = $dir->read()) {
@@ -528,14 +688,62 @@ function ied_plugin_multi_edit() {
 					$dir->close();
 				}
 				break;
+
+			case 'lifecycle':
+				$lc_evs = do_list(ps('ied_lc_event'));
+				foreach ($selected_cache as $name) {
+					$name = str_replace('.php', '', $name);
+					foreach ($lc_evs as $lc_ev) {
+						callback_event("plugin_lifecycle.$name", $lc_ev);
+					}
+				}
+				break;
+
+			case 'textpack':
+				// Read the textpack from the .php file and call install_textpack()
+				$textpack = array();
+				foreach ($selected_cache as $name) {
+					$fileaddr = $prefs['plugin_cache_dir'].DS.$name;
+
+					$contents = file($fileaddr);
+					$in_tp = $in_comment = false;
+					foreach ($contents as $row) {
+						if (strpos($row, '/**') === 0) {
+							$in_comment = true;
+						}
+						if (strpos($row, '**/') === 0) {
+							$in_comment = false;
+						}
+						if (strpos($row, 'EOT;') !== false) {
+							break;
+						}
+						if ($in_tp === true) {
+							$textpack[] = trim($row);
+						}
+						if (!$in_comment && strpos($row, '$plugin[\'textpack\']') !== false) {
+							$in_tp = true;
+                  }
+               }
+				}
+
+				$done = install_textpack(join(n, $textpack));
+			break;
 		}
 	} else {
 		$selected_cache = array();
 	}
-	if ($method == 'delete') {
-		$message = gTxt('plugin_deleted', array('{name}' => join(', ', array_merge($selected, $selected_cache))));
-	} else {
-		$message = gTxt('plugin_updated', array('{name}' => join(', ', $selected)));
+
+	$message = '';
+	if ($selected || $selected_cache) {
+		if ($method === 'delete') {
+			$message = gTxt('plugin_deleted', array('{name}' => join(', ', array_merge($selected, $selected_cache))));
+		} else if ($method === 'lifecycle') {
+			$message = gTxt('ied_plugin_lc_fired', array('{name}' => join(', ', array_merge($selected, $selected_cache)), '{event}' => join(',', $lc_evs)));
+		} else if ($method === 'textpack') {
+			$message = gTxt('textpack_strings_installed', array('{count}' => $done));
+		} else {
+			$message = gTxt('plugin_updated', array('{name}' => join(', ', $selected)));
+		}
 	}
 	ied_plugin_list($message);
 }
@@ -555,19 +763,7 @@ function ied_plugin_anchor($evt, $stp, $linktext, $nv = array(), $atts = array()
 
 // -------------------------------------------------------------
 function ied_plugin_status_link($status, $name, $linktext) {
-//TODO: remove global line
-	global $ied_pc_event;
-
 	return asyncHref($linktext, array('step' => 'ied_plugin_switch_status', 'thing' => $name),' title="'.($status==1 ? gTxt('disable') : gTxt('enable')).'"' );
-
-//TODO: Remove
-	return '<a href="?'
-		. 'event='.$ied_pc_event
-		.a.'step=ied_plugin_switch_status'
-		.a.'status='.$status
-		.a.'name='.urlencode($name)
-		.a.'_txp_token='.form_token()
-		.'">'.$linktext.'</a>';
 }
 
 // -------------------------------------------------------------
@@ -594,20 +790,6 @@ function ied_plugin_set_order() {
 	$order = min(max( intval($load_order), 1), 9);
 	safe_update('txp_plugin', "load_order = $load_order", "name = '$name'");
 	ied_plugin_list(gTxt('plugin_saved', array('{name}' => $name)));
-}
-
-// -------------------------------------------------------------
-function ied_plugin_order_form($name, $load_order) {
-	global $ied_pc_event;
-
-	for ($i = 1; $i <= 9; $i++) $orders[$i] = $i;
-	return form(
-		eInput($ied_pc_event).n.
-		sInput('ied_plugin_set_order').n.
-		hInput('name', $name).n.
-		selectInput('load_order', $orders, $load_order, 0, 1)
-		,'display:inline'
-	);
 }
 
 // -------------------------------------------------------------
@@ -778,8 +960,8 @@ function ied_plugin_edit($message='', $newfile='') {
 	$phpdoc = '';
 
 	echo
-		hed(gTxt('ied_plugin_edit', array('{name}' => $name, '{version}' => $version)).n.$vhelplinkfull, 2),
-		n, form(
+		hed(gTxt('ied_plugin_edit', array('{name}' => $name, '{version}' => $version)).n.$vhelplinkfull, 2).
+		n. form(
 			'<div id="ied_plugin_sub">'. ($sub).'</div>'
 			.n. '<div class="summary-details"><h3 class="lever txp-summary'.(get_pref('pane_ied_plugin_meta_visible') ? ' expanded' : '').'"><a href="#ied_plugin_meta">' . gTxt('ied_plugin_meta_legend') . '</a></h3><div id="ied_plugin_meta" class="toggle" style="display:'.(get_pref('pane_ied_plugin_meta_visible') ? 'block' : 'none').'">'
 			.n. '<p><label>' . gTxt('name') . '</label>' . sp . $newname . sp. '<label>' . gTxt('version') . '</label>' . sp . $version_widget . $plugstatus . ( ($filename) ? tag(sp.sp.'('.$filename.')','span',' style="color:gray;"').hInput('filename',$filename) : '' ) . '</p>'
@@ -830,7 +1012,7 @@ function ied_plugin_edit($message='', $newfile='') {
 			.n. sInput('ied_plugin_save')
 			.n. eInput($ied_pc_event)
 			.n. hInput('name',$name)
-		, '', '', 'post', 'ied_editForm'),
+		, '', '', 'post', 'ied_editForm').
 		script_js(<<<EOF
 var ied_plugin_tp_total = 0;
 jQuery.fn.ied_plugin_resizehandle = function(curh) {
@@ -1492,20 +1674,20 @@ function ied_plugin_save_as_php_file() {
 	$helpchunk = ied_plugin_build_template('help', array($help, $css));
 	$codechunk = ied_plugin_build_template('code', str_replace("\r\n","\n",$code));
 
-	echo ied_plugin_build_template('preamble'),
-		ied_plugin_build_template('name', $name),
-		ied_plugin_build_template('html_help'),
-		ied_plugin_build_template('version', $version),
-		ied_plugin_build_template('author', $author),
-		ied_plugin_build_template('author_uri', $author_uri),
-		ied_plugin_build_template('description', $description),
-		ied_plugin_build_template('load_order', $load_order),
-		ied_plugin_build_template('type', $type),
-		ied_plugin_build_template('flags', $flags),
-		ied_plugin_build_template('textpack', $textpack),
-		ied_plugin_build_template('include'),
-		(($oporder == 0) ? $codechunk : $helpchunk),
-		(($oporder == 1) ? $codechunk : $helpchunk),
+	echo ied_plugin_build_template('preamble').
+		ied_plugin_build_template('name', $name).
+		ied_plugin_build_template('html_help').
+		ied_plugin_build_template('version', $version).
+		ied_plugin_build_template('author', $author).
+		ied_plugin_build_template('author_uri', $author_uri).
+		ied_plugin_build_template('description', $description).
+		ied_plugin_build_template('load_order', $load_order).
+		ied_plugin_build_template('type', $type).
+		ied_plugin_build_template('flags', $flags).
+		ied_plugin_build_template('textpack', $textpack).
+		ied_plugin_build_template('include').
+		(($oporder == 0) ? $codechunk : $helpchunk).
+		(($oporder == 1) ? $codechunk : $helpchunk).
 		ied_plugin_build_template('postamble');
 
 	die();
@@ -1898,7 +2080,7 @@ function ied_plugin_install($plugin='') {
 
 // -------------------------------------------------------------
 function ied_plugin_save_pane_state() {
-	$panes = array('ied_plugin_tp_strings', 'ied_plugin_code', 'ied_plugin_docs', 'ied_plugin_meta', 'ied_plugin_utils', 'ied_plugin_cpanel');
+	$panes = array('ied_plugin_tp_strings', 'ied_plugin_code', 'ied_plugin_docs', 'ied_plugin_meta', 'ied_plugin_utils', 'ied_plugin_cpanel', 'ied_plugin_dbplugs', 'ied_plugin_cacheplugs');
 	$pane = gps('pane');
 	if (in_array($pane, $panes))
 	{
@@ -2282,9 +2464,9 @@ function ied_plugin_help_viewer($message='') {
 	}
 
 	pagetop(gTxt('ied_plugin_view_help', array('{name}' => $name)), $message);
-	echo n, '<div id="plugin_container" class="txp-container txp-view">',
-		n, '<div class="text-column">' . $out . '</div>',
-		n, '</div>';
+	echo n. '<div id="plugin_container" class="txp-container txp-view">'.
+		n. '<div class="text-column">' . $out . '</div>'.
+		n. '</div>';
 }
 
 // -------------------------------------------------------------
@@ -2316,7 +2498,7 @@ function ied_plugin_prefs($message='') {
 
 	$btnSave = fInput('submit', 'submit', gTxt('save'), 'publish');
 
-	echo '<h1 class="txp-heading">', gTxt('ied_plugin_lbl_setup'), '</h1>',
+	echo '<h1 class="txp-heading">' . gTxt('ied_plugin_lbl_setup') . '</h1>'.
 		script_js(<<<EOJS
 var ied_plugin_path_re = new RegExp("^.*[/\\]", "g")
 function ied_plugin_prefswap(selID, selValue) {
@@ -3225,356 +3407,314 @@ if (0) {
 ?>
 <!--
 # --- BEGIN PLUGIN HELP ---
-<h1>Inspired plugin composer</h1>
-
-	<p>Creates a new page under the <i>Extensions</i> tab where you can edit and export plugins that are already installed in Textpattern, as well as create or upload new plugins created by the community.</p>
-
-	<h2>Features</h2>
-
-	<ul>
-		<li>Create, edit, upload or install plugin code and documentation, then publish your wares in the standard Textpattern plugin format.</li>
-		<li>Full support for the official zem_tpl.php plugin template and the modified &#8220;code first&#8221; version by <a href="http://txp-plugins.netcarving.com/plugins/modified-plugin-compiler">net-carver</a>, which also incorporates a &#8216;style&#8217; segment for your help text (although it should be rarely needed).</li>
-		<li>Optional syntax checker to protect the site / admin side from bad code.</li>
-		<li>Export plugins in a variety of formats, allowing you to switch between editing in the plugin composer or your favourite editing program. You can export:
-	<ul>
-		<li>a standard BASE64-encoded text file.</li>
-		<li>a gzipped version (useful for large plugins).</li>
-		<li>a php file in the standard template format.</li>
-		<li>Textpacks on their own &#8212; any combination of languages.</li>
-	</ul></li>
-		<li>Support for all plugin types: Library, Public, and Admin (with or without <span class="caps">AJAX</span>).</li>
-		<li>Specify a recommended plugin load order if your plugin needs special powers.</li>
-		<li>Documentation can be written in Textile or <span class="caps">HTML</span>.</li>
-		<li>Take advantage of the <a href="http://forum.textpattern.com/viewtopic.php?id=13089">TinyMCE <span class="caps">WYSIWYG</span> editor</a> for the help section, or a variety of javascript syntax highlighters / editors for code. See the <a href="#ied_plugin_setup">setup</a> section for more on the available editors.</li>
-		<li>Built-in Textile help viewer (thanks to net-carver&#8217;s <a href="http://txp-plugins.netcarving.com/plugins/plugin-help-viewer">Plugin Help Viewer</a>) to allow you to preview your Help text during development.</li>
-		<li>Set a code &#8220;restore point&#8221; and roll back to that point if things go sideways. Also useful for returning plugin source code to its as-installed state.</li>
-	</ul>
-
-	<h2>Installation / Uninstallation</h2>
-
-	<p class="important">Requires Textpattern 4.5.0+</p>
-
-	<p>Download the plugin (v0.5 and above) from <a href="http://stefdawson.com/sw">stefdawson.com</a>, paste the code into Textpattern&#8217;s <em>Admin-&gt;Plugins</em> page, install and enable the plugin.</p>
-
-	<p>The default preferences are automatically created when you install the plugin or visit the Setup screen, by clicking the <b>Setup</b> button in the top right corner of the <i>Extensions-&gt;Plugin composer</i> panel. See the <a href="#ied_plugin_setup">setup section</a> for details.</p>
-
-	<p>To remove the plugin composer (noooo!) simply delete it as normal from the <i>Admin-&gt;Plugins</i> panel. All the preferences will automatically be removed as well. <span class="caps">NOTE</span>: deleting the plugin from the plugin composer window itself <em>will not</em> delete the preferences unless you have set the plugin to respond to &#8216;delete&#8217; lifecycle events.</p>
-
-	<h2 id="ied_plugin_list">List panel</h2>
-
-	<p>At the top of the main page is a collapsible area labelled <code>Installation</code>. This is dealt with in the <a href="#ied_plugin_create">Creating plugins</a> section; the rest of the page lists all installed plugins. The columns are:</p>
-
-	<dl>
-		<dt><span>Plugin</span></dt>
-		<dd>Click the plugin name to <a href="#ied_plugin_edit">edit</a> it. If the plugin has preferences associated with it, you will also see an <b>[Options]</b> link.</dd>
-		<dt><span>Author</span></dt>
-		<dd>If available, click the author to visit their site.</dd>
-		<dt><span>Version (Modified)</span></dt>
-		<dd>Shows the current version number and whether the plugin has been modified from when it was either created or installed. If it has, you can click the version number to restore the plugin code to its installed state or last <a href="#ied_plugin_restore">restore point</a>.</dd>
-		<dt><span>Description</span></dt>
-		<dd>A brief one-line overview of what the plugin does.</dd>
-		<dt><span>Publish</span></dt>
-		<dd>Three links
-	<dl>
-		<dd><em>Publish</em> : exports the plugin as a .txt file for distribution to other Textpattern users.</dd>
-		<dd><em>Zip</em> : exports the plugin as a compressed (gzipped) .txt file for distribution.</dd>
-		<dd><em>Help</em> : displays the (textile processed) plugin documentation, if there is any.</dd>
-	</dl></dd>
-		<dd>All these tasks (and more) can be performed from the <a href="#ied_plugin_edit">Edit panel</a>.</dd>
-		<dt><span>Order</span></dt>
-		<dd>The recommended plugin load order from 1 (loaded first) to 9 (loaded last). 5 is default.</dd>
-		<dd>Note that if using the plugin cache directory this feature is <em>only available if the <code>$plugin[&#39;order&#39;]</code> string is in the template to begin with.</em> So if your load order keeps returning to &#8216;5&#8217;, edit your template directly to add that string, or paste your plugin into the relevant parts of the <a href="http://code.google.com/p/textpattern/source/browse/development/4.x-plugin-template/zem_plugin.php">empty plugin template</a> and upload it.</dd>
-		<dt><span>Active</span></dt>
-		<dd>Enable or disable a plugin by clicking entries in this column &#8212; this will only trigger any enabled/disabled notification event in your plugin if you have set the plugin up to do so.</dd>
-	</dl>
-
-	<p>Use the multi-edit checkboxes (you can shift click them to select more than one at a time) to delete plugins or make mass changes. Deletion will only trigger the &#8216;deleted&#8217; notification event if you have told the composer to allow plugins to respond to lifecycle events.</p>
-
-	<p>If you are using the plugin_cache_dir (<i>Admin-&gt;Advanced Prefs</i>), any plugins in the standard template format uploaded to this directory will be available immediately for editing and testing. You can edit and publish the plugins in the same manner as the regular, installed plugins above, with the following exceptions:</p>
-
-	<ol>
-		<li>There is no concept of &#8216;modified&#8217; or of restore points as the files always represent the most up-to-date version. Use your own external versioning.</li>
-		<li>Cached plugins are &#8220;always on&#8221; and do not need to be installed. To deactivate the plugin the file must be removed from the plugin cache directory.</li>
-		<li>It follows that the lifecycle notification events (installed, deleted, enabled, disabled) are not triggered from plugins in the cache directory.</li>
-		<li>The recommended load order cannot be changed from the list panel; it can only be altered via the <a href="#ied_plugin_edit">edit panel</a>. The specified load order is only written to the file when the plugin is exported. Load order is alphabetical for all plugins in the plugin_cache directory.</li>
-	</ol>
-
-	<h2 id="ied_plugin_create">Creating, installing and naming plugins</h2>
-
-	<p>There are a few ways of creating plugins from the composer&#8217;s list panel. Expand the &#8216;Installation&#8217; twisty at the top of the composer&#8217;s List panel to see them all.</p>
-
-	<p>The first is to create a blank, empty plugin; use the first text box for this and the <b>Create new plugin</b> button. Points to note:</p>
-
-	<ul>
-		<li>If you use a standard plugin name (e.g. <code>abc_my_plugin</code>) it will be created in the database.</li>
-		<li>If you add <code>.php</code> to the plugin name, it will be created in the plugin cache directory in the standard template format.</li>
-		<li>Avoid specifying the version of the plugin in the name &#8212; you should use the <b>Rename file</b> or <b>Export</b> options in the Edit panel to alter the filename into your preferred filename format (see <a href="#ied_plugin_setup">setup</a>)</li>
-	</ul>
-
-	<p>The second method of creating a plugin is to upload one using the Browse/upload box. Please note:</p>
-
-	<ul>
-		<li>You can upload code as either:
-	<ul>
-		<li>a standard plugin base64 .txt file.</li>
-		<li>a standard plugin template (either code-first or help-first, complete with <span class="caps">CSS</span> areas).</li>
-		<li>a <span class="caps">PHP</span> file containing raw code only.</li>
-	</ul></li>
-		<li>The plugin will always be installed in the database when using this method (upload template plugins manually via <span class="caps">FTP</span> or create a new one with a .php extension and paste the code into it if you want it in the plugin cache).</li>
-		<li>If the plugin exists it will be updated with your new info.</li>
-		<li>This is the only place you can upload raw <span class="caps">PHP</span> with the <code>&lt;?php ?&gt;</code> markers. Everywhere else you should use a full template.</li>
-		<li>If you add a plugin Name in the box above the upload widget before clicking <b>Upload</b>, your plugin will take that name.</li>
-	</ul>
-
-	<p>You may also install a plugin just like on the <i>Admin-&gt;Plugins</i> panel by copying and pasting the contents of a standard plugin .txt file into the Install textarea and hitting the <b>Install</b> button. Note there are a few differences from the core&#8217;s installer:</p>
+h1. Inspired plugin composer
 
-	<ul>
-		<li>There is no preview step; the plugin is installed immediately, so be sure you trust the code!</li>
-		<li>You can choose whether the plugin is allowed to run its &#8216;install&#8217; lifecycle event by using the radio button below the textarea.</li>
-		<li>You can elect to have the plugin auto-enable itself by selecting the appropriate radio entry below the textarea prior to clicking <em>Install</em>.</li>
-		<li>The radio buttons take on the default settings from the <a href="#ied_plugin_setup">setup panel</a>.</li>
-	</ul>
+Creates a new page under the __Extensions__ tab where you can edit and export plugins that are already installed in Textpattern, as well as create or upload new plugins created by the community.
 
-	<p>By convention, every plugin should be created with a three-letter prefix, an underscore, then the name of the plugin. You are free to choose your own three-letter prefix (usually your initials) subject to <a href="http://www.textpattern.net/wiki/index.php?title=Reserved_Plugin_Prefixes">avoiding ones already taken by other plugin authors</a> so people can get to know your work. Plus, it groups your plugins together in the <a href="http://textpattern.org/plugins">plugin respository</a>. All functions, variables (including <span class="caps">DOM</span> nodes), <span class="caps">CSS</span> classes, Textpack strings and anything else you inject into the global scope should be prefixed by <strong>at least</strong> your three letter code; preferably the whole plugin name (or abridged version thereof) to avoid namespace clashes with your own and other plugins.</p>
+h2. Features
 
-	<h2 id="ied_plugin_edit">Edit panel</h2>
+* Create, edit, upload or install plugin code and documentation, then publish your wares in the standard Textpattern plugin format.
+* Full support for the official zem_tpl.php plugin template and the modified "code first" version by "net-carver":http://txp-plugins.netcarving.com/plugins/modified-plugin-compiler, which also incorporates a 'style' segment for your help text (although it should be rarely needed).
+* Optional syntax checker to protect the site / admin side from bad code.
+* Export plugins in a variety of formats, allowing you to switch between editing in the plugin composer or your favourite editing program. You can export:
+** a standard BASE64-encoded text file.
+** a gzipped version (useful for large plugins).
+** a php file in the standard template format.
+** Textpacks on their own -- any combination of languages.
+* Support for all plugin types: Library, Public, and Admin (with or without AJAX).
+* Specify a recommended plugin load order if your plugin needs special powers.
+* Documentation can be written in Textile or HTML.
+* Take advantage of the "TinyMCE WYSIWYG editor":http://forum.textpattern.com/viewtopic.php?id=13089 for the help section, or a variety of javascript syntax highlighters / editors for code. See the "setup":#ied_plugin_setup section for more on the available editors.
+* Built-in Textile help viewer (thanks to net-carver's "Plugin Help Viewer":http://txp-plugins.netcarving.com/plugins/plugin-help-viewer) to allow you to preview your Help text during development.
+* Set a code "restore point" and roll back to that point if things go sideways. Also useful for returning plugin source code to its as-installed state.
+
+h2. Installation / Uninstallation
+
+p(important). Requires Textpattern 4.5.0+
+
+Download the plugin (v0.5 and above) from "stefdawson.com":http://stefdawson.com/sw, paste the code into Textpattern's _Admin->Plugins_ page, install and enable the plugin.
+
+The default preferences are automatically created when you install the plugin or visit the Setup screen, by clicking the **Setup** button in the top right corner of the __Extensions->Plugin composer__ panel. See the "setup section":#ied_plugin_setup for details.
+
+To remove the plugin composer (noooo!) simply delete it as normal from the __Admin->Plugins__ panel. All the preferences will automatically be removed as well. NOTE: deleting the plugin from the plugin composer window itself _will not_ delete the preferences unless you have set the plugin to respond to 'delete' lifecycle events.
+
+h2(#ied_plugin_list). List panel
+
+At the top of the main page is a collapsible area labelled @Installation@. This is dealt with in the "Creating plugins":#ied_plugin_create section; the rest of the page lists all installed plugins. The columns are:
+
+; %Plugin%
+: Click the plugin name to "edit":#ied_plugin_edit it. If the plugin has preferences associated with it, you will also see an **[Options]** link.
+; %Author%
+: If available, click the author to visit their site.
+; %Version (Modified)%
+: Shows the current version number and whether the plugin has been modified from when it was either created or installed. If it has, you can click the version number to restore the plugin code to its installed state or last "restore point":#ied_plugin_restore.
+; %Description%
+: A brief one-line overview of what the plugin does.
+; %Publish%
+: Three links
+:: _Publish_ : exports the plugin as a .txt file for distribution to other Textpattern users.
+:: _Zip_ : exports the plugin as a compressed (gzipped) .txt file for distribution.
+:: _Help_ : displays the (textile processed) plugin documentation, if there is any.
+: All these tasks (and more) can be performed from the "Edit panel":#ied_plugin_edit.
+; %Order%
+: The recommended plugin load order from 1 (loaded first) to 9 (loaded last). 5 is default.
+: Note that if using the plugin cache directory this feature is _only available if the @$plugin['order']@ string is in the template to begin with._ So if your load order keeps returning to '5', edit your template directly to add that string, or paste your plugin into the relevant parts of the "empty plugin template":http://code.google.com/p/textpattern/source/browse/development/4.x-plugin-template/zem_plugin.php and upload it.
+; %Active%
+: Enable or disable a plugin by clicking entries in this column -- this will only trigger any enabled/disabled notification event in your plugin if you have set the plugin up to do so.
 
-	<p>The Edit panel is where you craft your masterpiece. It is divided into various sections and boxes, as detailed here:</p>
+Use the multi-edit checkboxes (you can shift click them to select more than one at a time) to delete plugins or make mass changes. Deletion will only trigger the 'deleted' notification event if you have told the composer to allow plugins to respond to lifecycle events.
 
-	<h3>Buttons and links</h3>
+If you are using the plugin_cache_dir (__Admin->Advanced Prefs__), any plugins in the standard template format uploaded to this directory will be available immediately for editing and testing. You can edit and publish the plugins in the same manner as the regular, installed plugins above, with the following exceptions:
 
-	<ul>
-		<li><b>Save</b> : commits changes from the whole page. There are two identical buttons, for convenience; top and bottom.</li>
-		<li><b>[ Docs ]</b> : shows the documentation as users will see it (i.e. Textile processed into <span class="caps">HTML</span>). Any help text over 64KB in length is truncated so you can verify that all your documentation fits into the users&#8217; destination database.</li>
-	</ul>
+# There is no concept of 'modified' or of restore points as the files always represent the most up-to-date version. Use your own external versioning.
+# Cached plugins are "always on" and do not need to be installed. To deactivate the plugin the file must be removed from the plugin cache directory.
+# It follows that the lifecycle notification events (installed, deleted, enabled, disabled) are not triggered from plugins in the cache directory.
+# The recommended load order cannot be changed from the list panel; it can only be altered via the "edit panel":#ied_plugin_edit. The specified load order is only written to the file when the plugin is exported. Load order is alphabetical for all plugins in the plugin_cache directory.
 
-	<h3>Meta information</h3>
+h2(#ied_plugin_create). Creating, installing and naming plugins
 
-	<dl>
-		<dt><strong>Name</strong></dt>
-		<dd>The name of your plugin, which you can change at any time. Note that if you are editing a file from the plugin cache directory and the <code>$plugin[&#39;name&#39;]</code> row is commented out in the file, you will not be able to change the plugin name; it will always be the name of the file.</dd>
-		<dt><strong>Version</strong></dt>
-		<dd>The current version of your plugin. You are free to choose your own versioning convention.</dd>
-		<dd>To the right of these boxes will be some optional items that appear depending on the current mode of operation:
-	<dl>
-		<dd><strong>Restore point</strong> (in-database plugins only) : selecting this checkbox will (upon save) store the current code as a baseline to which you may &#8220;roll back&#8221; to at a later date. See <a href="#ied_plugin_restore">restore points</a>.</dd>
-		<dd><strong>Rename file</strong> (cache_dir plugins only) : by default, when you save a file in the plugin cache directory, it is overwritten with your changes. Once a plugin is released you would normally download a copy via <span class="caps">FTP</span> from the plugin_cache_dir for safekeeping. If you then subsequently modify the plugin and increase the version number, you may wish to alter the filename as well. Checking this box will (upon save) rename the file in the plugin cache directory to reflect the current version number. See the <a href="#ied_plugin_setup">setup panel</a> for details on customising the filename format.</dd>
-		<dd><strong>Enable</strong> (in-database plugins only) : switch the plugin on or off after Save.</dd>
-		<dd><strong>(file name)</strong> (cache_dir plugins only) : the current filename you are editing.</dd>
-	</dl></dd>
-		<dt><strong>Description</strong></dt>
-		<dd>Very brief one-liner describing your plugin&#8217;s core function / reason for existence. 255 characters maximum.</dd>
-		<dt><strong>Author</strong> :</dt>
-		<dd>You!</dd>
-		<dt><strong>Website</strong></dt>
-		<dd>Your home page or plugin page. Will be hyperlinked to your Author name in the List panel.</dd>
-		<dt><strong>Plugin type</strong></dt>
-		<dd>Choose one of the types that best fits the intended use of your plugin. If you choose &#8216;Public&#8217; and try to access the admin side in your code, a warning will be issued when the plugin is saved so you can choose a more appropriate type.</dd>
-		<dt><strong>Flags</strong></dt>
-		<dd>Choose which plugin flags are to be associated with the plugin:
-	<dl>
-		<dd><strong>Has prefs</strong> : check this to indicate your plugin responds to the <i>plugin_prefs.your_plugin_name</i> event.</dd>
-		<dd><strong>Event notify</strong> : check this to indicate your plugin responds to the <i>plugin_lifecycle.your_plugin_name</i> event/steps.</dd>
-	</dl></dd>
-		<dt><strong>Load order</strong></dt>
-		<dd>Choose the recommended order in which you think your plugin should be loaded by users. Most of the time, the default of &#8216;5&#8217; is fine but for special cases where your plugin has to set up an environment or has to wait for other plugins to load first, you might require one of the numbers either side. Be aware that this is a <em>recommendation</em> and is overridable by the site administrator. If the plugin is already deployed on a site, the load order that is already set will be used regardless of the setting of this value; only new installations will be set to this value by default.</dd>
-	</dl>
+There are a few ways of creating plugins from the composer's list panel. Expand the 'Installation' twisty at the top of the composer's List panel to see them all.
 
-	<h3>Plugin code</h3>
+The first is to create a blank, empty plugin; use the first text box for this and the **Create new plugin** button. Points to note:
 
-	<p>Your plugin code goes here. Write your masterpiece and either click the <b>Save</b> button at the top of the window (which saves everything: code, help, meta data, etc) or if you are simply updating just the code portion, use the <b>Save code</b> button at the top-right of the area for rapid background saving. During the save process, the textarea dims to show it is working, though you can still continue to type if you wish. When the textarea returns to full visibility, it means the save process is complete. Your code is (optionally) run through a rudimentary syntax checker when using the <b>Save Code</b> button and any error is highlighted. <span class="warning">If an error occurs, your plugin is not saved</span>.</p>
+* If you use a standard plugin name (e.g. @abc_my_plugin@) it will be created in the database.
+* If you add @.php@ to the plugin name, it will be created in the plugin cache directory in the standard template format.
+* Avoid specifying the version of the plugin in the name -- you should use the **Rename file** or **Export** options in the Edit panel to alter the filename into your preferred filename format (see "setup":#ied_plugin_setup)
 
-	<p>The textarea is resizable by grabbing the <code>--- + ---</code> below the box and dragging. The box size will be remembered via a cookie for one year from your last adjustment.</p>
+The second method of creating a plugin is to upload one using the Browse/upload box. Please note:
 
-	<p>Plugins are limited to 16Mb of code so there is also a character countdown just below the edit box. If you start approaching the limit(!), it might be worth considering splitting your plugin into a few parts or working for Micro$oft, where code bloat is acceptable.</p>
+* You can upload code as either:
+** a standard plugin base64 .txt file.
+** a standard plugin template (either code-first or help-first, complete with CSS areas).
+** a PHP file containing raw code only.
+* The plugin will always be installed in the database when using this method (upload template plugins manually via FTP or create a new one with a .php extension and paste the code into it if you want it in the plugin cache).
+* If the plugin exists it will be updated with your new info.
+* This is the only place you can upload raw PHP with the @<?php ?>@ markers. Everywhere else you should use a full template.
+* If you add a plugin Name in the box above the upload widget before clicking **Upload**, your plugin will take that name.
 
-	<p>In Firefox and IE7+ you can use the <em>Jump to line:</em> textbox. Enter a line number and press Enter to jump to that line in the code. In other browsers, ymmv.</p>
+You may also install a plugin just like on the __Admin->Plugins__ panel by copying and pasting the contents of a standard plugin .txt file into the Install textarea and hitting the **Install** button. Note there are a few differences from the core's installer:
 
-	<h3>Textpack strings</h3>
+* There is no preview step; the plugin is installed immediately, so be sure you trust the code!
+* You can choose whether the plugin is allowed to run its 'install' lifecycle event by using the radio button below the textarea.
+* You can elect to have the plugin auto-enable itself by selecting the appropriate radio entry below the textarea prior to clicking _Install_.
+* The radio buttons take on the default settings from the "setup panel":#ied_plugin_setup.
 
-	<p>Before Textpattern 4.3.0, any time you displayed a plugin-specific string to the user it made sense to write your own <code>gTxt()</code> function which packaged up the strings into one area of your plugin. While convenient, this meant that anyone who wanted to use your plugin in another lanugage had to edit the plugin code and rewrite your strings into the target language, which caused upgrade hassles.</p>
+By convention, every plugin should be created with a three-letter prefix, an underscore, then the name of the plugin. You are free to choose your own three-letter prefix (usually your initials) subject to "avoiding ones already taken by other plugin authors":http://www.textpattern.net/wiki/index.php?title=Reserved_Plugin_Prefixes so people can get to know your work. Plus, it groups your plugins together in the "plugin respository":http://textpattern.org/plugins. All functions, variables (including DOM nodes), CSS classes, Textpack strings and anything else you inject into the global scope should be prefixed by *at least* your three letter code; preferably the whole plugin name (or abridged version thereof) to avoid namespace clashes with your own and other plugins.
 
-	<p>This is no longer an issue, as Textpattern now has Textpacks: redistributable text files that contain language strings for direct insertion into the database.</p>
+h2(#ied_plugin_edit). Edit panel
 
-	<p class="warning">A word of caution: the Textpack area works a little differently to the rest of the Edit panel: most changes happen live as you type.</p>
+The Edit panel is where you craft your masterpiece. It is divided into various sections and boxes, as detailed here:
 
-	<p>Before you begin you need to define a textpack prefix for the plugin. This is usually your three letter plugin prefix plus some unique identifier with which all strings in use by the plugin will begin. For example, the plugin composer uses <code>ied_plugin</code> (though it could have used <code>ied_pcomp</code> or <code>ied_pc</code>, etc). Note that using just your three letter prefix is probably not wise because your own future plugins might require a similarly-named replacement and the strings would clash. Of course, you might want to take advantage of this feature!</p>
+h3. Buttons and links
 
-	<p>Once you enter the prefix and your cursor leaves the box, the composer will store the prefix and search the plugin code immediately for any references to such prefixed strings inside any function call with <code>gTxt</code> in it. Any it does find will be listed and you can immediately begin entering your replacement text in the currently selected language. Whenever the cursor leaves a text box its contents is saved directly to the database.</p>
+* **Save** : commits changes from the whole page. There are two identical buttons, for convenience; top and bottom.
+* **[ Docs ]** : shows the documentation as users will see it (i.e. Textile processed into HTML). Any help text over 64KB in length is truncated so you can verify that all your documentation fits into the users' destination database.
 
-	<p>Textpack strings can be used on the Admin side, the Public site, or both. Choose the most appropriate location from the dropdown against each string.</p>
+h3. Meta information
 
-	<p>If you create or rename a gTxt string in the code, when your cursor leaves the textarea the new string(s) will be created for you in the textpack area at the top of the list. Note however they are not written to the database until you supply a replacement string.</p>
+; *Name*
+: The name of your plugin, which you can change at any time. Note that if you are editing a file from the plugin cache directory and the @$plugin['name']@ row is commented out in the file, you will not be able to change the plugin name; it will always be the name of the file.
+; *Version*
+: The current version of your plugin. You are free to choose your own versioning convention.
+: To the right of these boxes will be some optional items that appear depending on the current mode of operation:
+:: *Restore point* (in-database plugins only) : selecting this checkbox will (upon save) store the current code as a baseline to which you may "roll back" to at a later date. See "restore points":#ied_plugin_restore.
+:: *Rename file* (cache_dir plugins only) : by default, when you save a file in the plugin cache directory, it is overwritten with your changes. Once a plugin is released you would normally download a copy via FTP from the plugin_cache_dir for safekeeping. If you then subsequently modify the plugin and increase the version number, you may wish to alter the filename as well. Checking this box will (upon save) rename the file in the plugin cache directory to reflect the current version number. See the "setup panel":#ied_plugin_setup for details on customising the filename format.
+:: *Enable* (in-database plugins only) : switch the plugin on or off after Save.
+:: *(file name)* (cache_dir plugins only) : the current filename you are editing.
+; *Description*
+: Very brief one-liner describing your plugin's core function / reason for existence. 255 characters maximum.
+; *Author* :
+: You!
+; *Website*
+: Your home page or plugin page. Will be hyperlinked to your Author name in the List panel.
+; *Plugin type*
+: Choose one of the types that best fits the intended use of your plugin. If you choose 'Public' and try to access the admin side in your code, a warning will be issued when the plugin is saved so you can choose a more appropriate type.
+; *Flags*
+: Choose which plugin flags are to be associated with the plugin:
+:: *Has prefs* : check this to indicate your plugin responds to the __plugin_prefs.your_plugin_name__ event.
+:: *Event notify* : check this to indicate your plugin responds to the __plugin_lifecycle.your_plugin_name__ event/steps.
+; *Load order*
+: Choose the recommended order in which you think your plugin should be loaded by users. Most of the time, the default of '5' is fine but for special cases where your plugin has to set up an environment or has to wait for other plugins to load first, you might require one of the numbers either side. Be aware that this is a _recommendation_ and is overridable by the site administrator. If the plugin is already deployed on a site, the load order that is already set will be used regardless of the setting of this value; only new installations will be set to this value by default.
 
-	<p>During the process of creating/renaming replacement strings, if it orphans another string then the orphan will be highlighted and an [x] button will appear next to it. If you wish to copy the old content out of the box and paste it into your renamed string, now is the time to do so. Once you&#8217;re sure you no longer need the string, hit the [x] button to immediately delete it from the database. It will be removed from <strong>all</strong> languages.</p>
+h3. Plugin code
 
-	<p>Please note:</p>
+Your plugin code goes here. Write your masterpiece and either click the **Save** button at the top of the window (which saves everything: code, help, meta data, etc) or if you are simply updating just the code portion, use the **Save code** button at the top-right of the area for rapid background saving. During the save process, the textarea dims to show it is working, though you can still continue to type if you wish. When the textarea returns to full visibility, it means the save process is complete. Your code is (optionally) run through a rudimentary syntax checker when using the **Save Code** button and any error is highlighted. %(warning)If an error occurs, your plugin is not saved%.
 
-	<ul>
-		<li>if you programmatically refer to strings (e.g. by concatenating string parts together to form the gTxt string name, or iterating over a loop and using variable substitution) then they will <em>not</em> be automatically be detected. You will have to use the &#8216;+&#8217; button to add such strings manually.</li>
-		<li>any programmatically-derived Textpack strings, or ones not inside a gTxt() function will show up with an [x] button. You should of course not delete these strings!</li>
-		<li>after you do a full save (i.e. not just a <b>Save Code</b>) all strings that are defined for the plugin will be displayed. Any derived strings will still be highlighted as potential orphans.</li>
-		<li>switching language from the select list will immediately load strings for that language.</li>
-		<li>clicking <b>Load</b> does the same task as switching language and is there in case you only have one language installed or wish to refresh the strings in the current language.</li>
-	</ul>
+The textarea is resizable by grabbing the @--- + ---@ below the box and dragging. The box size will be remembered via a cookie for one year from your last adjustment.
 
-	<p><strong>Importing strings from the current plugin</strong></p>
+Plugins are limited to 16Mb of code so there is also a character countdown just below the edit box. If you start approaching the limit(!), it might be worth considering splitting your plugin into a few parts or working for Micro$oft, where code bloat is acceptable.
 
-	<p>The success of the automatic find facility relies on two things:</p>
+In Firefox and IE7+ you can use the _Jump to line:_ textbox. Enter a line number and press Enter to jump to that line in the code. In other browsers, ymmv.
 
-	<ul>
-		<li>that the strings are all prefixed.</li>
-		<li>your plugin&#8217;s Type is one of the <span class="caps">AJAX</span> types (4 or 5).</li>
-	</ul>
+h3. Textpack strings
 
-	<p>If you&#8217;re converting an old plugin to the Textpack methodology then you may have hundreds of strings that would be a bind to copy one by one. The composer can try to help you out, but it only works if you have a function or method in your plugin where the strings are replaced and returned. If you don&#8217;t have that, now might be the time to do so to save yourself some effort! It doesn&#8217;t have to be referenced in the code, it just has to exist and return a string for a given name.</p>
+Before Textpattern 4.3.0, any time you displayed a plugin-specific string to the user it made sense to write your own @gTxt()@ function which packaged up the strings into one area of your plugin. While convenient, this meant that anyone who wanted to use your plugin in another lanugage had to edit the plugin code and rewrite your strings into the target language, which caused upgrade hassles.
 
-	<p>Once you have that in place, here are some steps you can go through to convert your plugin and grab all the necessary strings en masse:</p>
+This is no longer an issue, as Textpattern now has Textpacks: redistributable text files that contain language strings for direct insertion into the database.
 
-	<ol>
-		<li>inside your plugin&#8217;s gTxt() function, ensure that all keys are prefixed with your nominated plugin prefix.</li>
-		<li>globally replace any reference to <code>abc_plugin_gTxt(&#39;</code> with <code>abc_plugin_gTxt(&#39;abc_prefix_</code>, if not already.</li>
-		<li>save the plugin from the composer window.</li>
-		<li>enter the Textpack prefix if it&#8217;s not already set.</li>
-		<li>give the name of your gTxt function, e.g. <code>ied_plugin_gTxt</code> in the <i>Load strings from function</i> box. If your <code>gTxt()</code> method is inside a class, specify <code>class_name::method_name</code> instead.</li>
-		<li>hit &#8216;Go&#8217;.</li>
-	</ol>
+p(warning). A word of caution: the Textpack area works a little differently to the rest of the Edit panel: most changes happen live as you type.
 
-	<p>If the composer can execute your chosen function then it&#8217;ll do so and return the strings as defined inside the function, populate each Textpack string and save it for you in the database automatically. Once that&#8217;s done and all strings are populated you can then:</p>
+Before you begin you need to define a textpack prefix for the plugin. This is usually your three letter plugin prefix plus some unique identifier with which all strings in use by the plugin will begin. For example, the plugin composer uses @ied_plugin@ (though it could have used @ied_pcomp@ or @ied_pc@, etc). Note that using just your three letter prefix is probably not wise because your own future plugins might require a similarly-named replacement and the strings would clash. Of course, you might want to take advantage of this feature!
 
-	<ol>
-		<li>globally replace any calls to <code>abc_plugin_gTxt</code> with the core <code>gTxt</code> in your plugin code.</li>
-		<li>delete your abc_plugin_gTxt function.</li>
-	</ol>
+Once you enter the prefix and your cursor leaves the box, the composer will store the prefix and search the plugin code immediately for any references to such prefixed strings inside any function call with @gTxt@ in it. Any it does find will be listed and you can immediately begin entering your replacement text in the currently selected language. Whenever the cursor leaves a text box its contents is saved directly to the database.
 
-	<p>Textpack strings are also written to the file of any plugin you are editing in the cache_dir when you Save the plugin, as long as you are using a recent template that has the  <code>$plugin[&#39;textpack&#39;]</code> string in it.</p>
+Textpack strings can be used on the Admin side, the Public site, or both. Choose the most appropriate location from the dropdown against each string.
 
-	<p><strong>Switching language</strong></p>
+If you create or rename a gTxt string in the code, when your cursor leaves the textarea the new string(s) will be created for you in the textpack area at the top of the list. Note however they are not written to the database until you supply a replacement string.
 
-	<p>If at any time you want to see the installed textpack strings in other languages, simply use the select list to choose one. Any defined strings will be loaded into the textpack fields. You&#8217;ll see a counter whizzing up to show you how far it&#8217;s gone. As a translation aid, the equivalent string in your nominated default language (see <a href="#ied_plugin_setup">setup</a>) will be displayed as you hover over the textpack entry. You can choose to translate strings yourself or you can defer translation to other members of the community after the plugin is published. Textpacks can be linked to your textpattern.org plugin page by contributors and installed at any time from Textpattern&#8217;s <i>Languages</i> tab.</p>
+During the process of creating/renaming replacement strings, if it orphans another string then the orphan will be highlighted and an [x] button will appear next to it. If you wish to copy the old content out of the box and paste it into your renamed string, now is the time to do so. Once you're sure you no longer need the string, hit the [x] button to immediately delete it from the database. It will be removed from *all* languages.
 
-	<h3>Plugin help</h3>
+Please note:
 
-	<p>Documentation for detailing the plugin usage. Can (probably should!) be written using <a href="http://textpattern.com/textile-sandbox">Textile</a>. There are some <a href="http://textpattern.net/wiki/index.php?title=Creating_Plugin_Help_Guidelines">documentation guidelines</a> that serve as a good starting point. Note that the character countdown here is only approximate because when your plugin is saved and the help is converted to <span class="caps">HTML</span>, it usually takes up more space than Textile; please check that your help file renders correctly when your plugin is exported.</p>
+* if you programmatically refer to strings (e.g. by concatenating string parts together to form the gTxt string name, or iterating over a loop and using variable substitution) then they will _not_ be automatically be detected. You will have to use the '+' button to add such strings manually.
+* any programmatically-derived Textpack strings, or ones not inside a gTxt() function will show up with an [x] button. You should of course not delete these strings!
+* after you do a full save (i.e. not just a **Save Code**) all strings that are defined for the plugin will be displayed. Any derived strings will still be highlighted as potential orphans.
+* switching language from the select list will immediately load strings for that language.
+* clicking **Load** does the same task as switching language and is there in case you only have one language installed or wish to refresh the strings in the current language.
 
-	<p>The <em>Style</em> box is for any <span class="caps">CSS</span> style rules you wish to apply to your documentation, although you should not need this with modern admin themes. You are encouraged to reuse the admin&#8217;s core <span class="caps">CSS</span> rules as often as possible, but if there isn&#8217;t one that suits, it&#8217;s best to target your documentation specifically by surrounding the entire Plugin Help section with something like: <code>&lt;div id=&quot;abc_help&quot;&gt;h1. Docs go here...&lt;/div&gt;</code>.</p>
+*Importing strings from the current plugin*
 
-	<p>Note that both the Plugin Help and Style are governed by a size limit. Since they are both stored in the same 64kB field, the size is shared between them. Styles are <em>not</em> passed through the Textile processor and you don&#8217;t need to add the <code>&lt;style&gt;</code> tags; the composer will do that for you (but see the <a href="#ied_plugin_notes">notes</a>).</p>
+The success of the automatic find facility relies on two things:
 
-	<h3>Distribution</h3>
+* that the strings are all prefixed.
+* your plugin's Type is one of the AJAX types (4 or 5).
 
-	<p>Once you have saved your plugin, there is a section right at the bottom that allows you to export your plugin in a variety of formats. Above the links is a language select box that governs how Textpacks are dealt with. If you choose the first (empty) item then no Textpack information is included in the exported file. The only exception is when you save Textpacks directly: the first item is a shortcut for &#8216;all languages&#8217; to save you having to select them all.</p>
+If you're converting an old plugin to the Textpack methodology then you may have hundreds of strings that would be a bind to copy one by one. The composer can try to help you out, but it only works if you have a function or method in your plugin where the strings are replaced and returned. If you don't have that, now might be the time to do so to save yourself some effort! It doesn't have to be referenced in the code, it just has to exist and return a string for a given name.
 
-	<ul>
-		<li><strong>Plugin code for distribution</strong> : is a direct copy &#8216;n&#8217; paste area that contains your entire plugin + docs. You can take this entire area and paste it into the &#8216;Install plugin&#8217; box. Since this adds to the time it takes to do a full save of the plugin, this portion is optional and can be enabled from the <a href="#ied_plugin_setup">setup panel</a>.</li>
-		<li><strong>Export as abc_myplugin.txt</strong> : converts the plugin help to <span class="caps">HTML</span> and saves the plugin to your computer as a redistributable text file for other Textpattern users to install. If you have chosen any Textpack languages from the adjacent select list, they will be bundled with your plugin and thus installed automatically along with the plugin.</li>
-		<li><strong>Export as abc_myplugin.txt (compressed)</strong> : converts the plugin help to <span class="caps">HTML</span> and saves the plugin as a redistributable, gzipped text file for other Textpattern users to install. Useful for large plugins or to offer an alternative for people who have stringent size limits imposed by their host. Textpack strings are bundled too if you have chosen at least one language from the select list.</li>
-		<li><strong>Export as abc_myplugin.php</strong> : saves the plugin in a Textpattern standard template format. Useful for keeping the plugin for yourself &#8212; complete with Textiled help markup &#8212; so it can be later edited and re-issued / updated or shared with other developers who have the plugin composer or zem_tpl.php compiler. Textpack strings are bundled as part of the template if you choose.</li>
-		<li><strong>Export Textpack(s)</strong> : choose one or more languages from the select list to gather all your plugin&#8217;s Textpack strings and download them as a redistributable text file for other textpattern users to install or modify. You (or anyone else) can / will be able to upload links to Textpacks on textpattern.org so they are available from a central location.</li>
-	</ul>
-
-	<p>Note that when exporting as a standard plugin, the Textile processor attempts to decide if you have used Textile or not; it simply looks for a textiled header (<code>h1.</code> through <code>h6.</code>). Running pure <span class="caps">HTML</span> through Textile may occasionally cause encoding issues depending on the original character set used so it is always best to try and stick to Textile as the documentation system.</p>
-
-	<h2 id="ied_plugin_restore">Restore points</h2>
-
-	<p>When a plugin is installed, a copy is kept in the database. If the plugin code (not help text) is subsequently edited, the plugin is considered &#8220;modified&#8221;; indicated in the plugin composer&#8217;s List panel. Sometimes you may wish to revert any changes back to the as-installed state.</p>
-
-	<p>Any time a plugin is marked as &#8216;modified&#8217;, the version number becomes clickable from the <a href="#ied_plugin_list">List panel</a>. Clicking it (and confirming you are sure) will wipe out any changes you made and return the plugin to its installed state.</p>
-
-	<p>During the editing process of your own plugins, it may be that at certain times you wish to put a stake in the ground and say &#8220;this is my current baseline that I might want to return to later&#8221;. Perhaps you are about to make some major edits or try something experimental and want an easy fallback mechanism. That&#8217;s where the &#8220;Restore point&#8221; checkbox comes in.</p>
-
-	<p>By checking the box when you save your plugin, the current code will become your new rollback point and the plugin will no longer be marked &#8220;modified&#8221;. Any changes made beforehand will not be recoverable so you will have to rely on your own backups if you wish to go back further. Any edits you make after creating a restore point can be undone by visiting the List panel and clicking the version number next to your plugin. Currently, only one rollback point can be stored in the database.</p>
-
-	<h2 id="ied_plugin_setup">Setup panel</h2>
-
-	<p>Clicking Setup from the main <a href="#ied_plugin_list">List panel</a> allows access to the plugin setting.</p>
-
-	<dl>
-		<dt><strong>Plugin editor</strong></dt>
-		<dd>You may choose to edit the code using a 3rd party syntax highlighter. Current support is for EditArea, CodeMirror and CodePress.</dd>
-		<dd>Choose the system here, and specify the <acronym title="s"><span class="caps">URL</span></acronym> of the scripts and stylesheets in the box beneath. If your chosen editor requires more than one file to be loaded then list them all, separated by commas. If any of the files are stylesheets, prefix the name with <code>css:</code> so the plugin knows to insert a <code>&lt;link rel=&quot;stylesheet&quot; ...&gt;</code> instead of a <code>&lt;script&gt;</code> tag.</dd>
-		<dd>If you want to supply any configuration options to the editor, type them in the <strong>Plugin editor configuration options</strong> textarea. Write them as name:value pairs separated by comma, exactly as you would if initialisaing the script according to their documentation.</dd>
-		<dt><strong>Plugin editor width</strong></dt>
-		<dd>The size of the textareas on the <a href="#ied_plugin_edit">edit panel</a>. Set to suit your screen resolution. Include the units (px, em, %, etc) if you wish; it&#8217;ll default to pixels if you omit them.</dd>
-		<dt><strong>Help editor</strong></dt>
-		<dd>You may choose to edit the help manually via Textile or use TinyMCE for a more <span class="caps">WYSIWYG</span> experience.</dd>
-		<dd>In a similar manner to the plugin code editor you need to tell the composer the <span class="caps">URL</span> to the javascript file. You can also supply configuration options. The defaults should give you a head start on how to use them: consult the TinyMCE documentation for more.</dd>
-		<dt><strong>Optional interface elements</strong></dt>
-		<dd>Choose which parts of the <a href="#ied_plugin_edit">Edit panel</a> you want to be visible in the interface.</dd>
-		<dt><strong>Perform lifecycle actions on</strong></dt>
-		<dd>When plugins are installed, enabled, disabled or deleted plugins can run code to perform installation or cleanup actions. Choose which ones you wish to permit when installing, enabling/disabling or deleting plugins from the composer&#8217;s <a href="#ied_plugin_list">List panel</a>.</dd>
-		<dd>The value of the &#8216;install&#8217; checkbox chosen here becomes the default option in the <em>Perform post-install actions</em> radio button under the <em>Install</em> textarea.</dd>
-		<dt><strong>Auto-enable plugins on install</strong></dt>
-		<dd>Whether to allow plugins to automatically switch on after installation, or to retain their previous status.</dd>
-		<dd>The setting chosen here becomes the default radio button selection under the <em>Install</em> textarea on the list panel.</dd>
-		<dt><strong>Syntax check on code save</strong></dt>
-		<dd>Whether to run the code through the syntax checker or not when you use the <b>Save Code</b> button. Highly recommended to save your admin side from breakage during development.</dd>
-		<dt><strong>Textpack language list</strong></dt>
-		<dd>Whether to only allow editing of strings from the currently installed languages, or all available Textpattern languages.</dd>
-		<dt><strong>Default Textpack language</strong></dt>
-		<dd>The primary language for your plugin strings (default = any). If you choose a language that is not installed (and you&#8217;re limiting the language list to only those installed) the default language will revert to your current admin-side language.</dd>
-		<dd>Note that if you set a language here, when you export Textpacks or build plugins, that will be the language expected to be installed in a user&#8217;s Textpattern. If you leave it at &#8216;any&#8217; the language marker is omitted from the Textpack and thus the strings bundled with the plugin (which may be in English) will install into whichever language is the user&#8217;s default (which may be something other than English). By forcing the default language, you force the language marker in the plugin. Thus if your users don&#8217;t have that language installed (e.g. someone only has nl-nl installed and not English) and they install your plugin, it will look at the installed language (nl-nl), compare it to the one in the plugin (en-gb), find it doesn&#8217;t match and will skip the Textpack installation. This will leave the user&#8217;s interface with lots of ugly <code>abc_plugin_some_item</code> strings instead of the actual translated content.</dd>
-		<dd>This could be handy if you are distributing Textpacks separately and have a good stock of them, or have loads of Textpacks bundled with the plugin, but for 95% of cases it is best to leave the default textpack language at <code>Any</code> so users of your plugin are guaranteed to get some translated strings, even if they are not in their &#8216;local&#8217; language. They can then at least translate them and make the Textpack available to other users.</dd>
-		<dt><strong><span class="caps">PHP</span> export order</strong></dt>
-		<dd>When saving your plugin in the standard template format, this governs whether you prefer the code block to be at the top of the file and the help block below, or vice versa.</dd>
-		<dt><strong>Export plugin filename format</strong></dt>
-		<dt><strong>Export compressed filename format</strong></dt>
-		<dt><strong>Export template filename format</strong></dt>
-		<dt><strong>Textpack filename format</strong></dt>
-		<dd>These define the format of the filenames when you export plugins/Textpacks. The first is for when you export standard <span class="caps">BASE</span>-64 plugins; the second is for compressed plugins; the third is for exporting a standard <span class="caps">PHP</span> template, and finally for exporting Textpacks.</dd>
-		<dd>Wherever you type <code>{name}</code>, the plugin name will appear. Similarly, <code>{version}</code> will be replaced with the current plugin version number. And <code>{lang}</code> will be replaced with either 1) the chosen language code, like en-gb; 2) &#8216;all&#8217; if you chose to export all textpacks as one file; 3) an abbreviated list of countries to which the languages in the pack apply if you choose to export more than one, e.g. <code>en+fi+nl+fr+de</code>.</dd>
-		<dd>You can type anything you like in these boxes, but it&#8217;s more useful to include the replacement strings somewhere in each box so you don&#8217;t get name / version clashes. For example, if you don&#8217;t like the fact that zipped plugins are exported as <code>pfx_my_plugin_v0.1_zip.txt</code>, you can change it. Perhaps you may prefer <code>pfx_my_plugin-compressed-0.1.txt</code>. In which case, set the 2nd box to <code>{name}-compressed-{version}.txt</code>.</dd>
-		<dd>Note the extension should usually be specified so your system/browser knows the file&#8217;s type when it is exported, but it&#8217;s not mandatory as the <span class="caps">MIME</span> type is given so (good) browsers should read that.</dd>
-		<dt><strong>Cache Textiled help path</strong></dt>
-		<dd>If you wish to take advantage of help cacheing, put the path to a temporary directory in the box. Empty the box if you prefer saves and exports to be slower!</dd>
-		<dd>Defaults to Textpattern&#8217;s temporary directory.</dd>
-	</dl>
-
-	<h2 id="ied_plugin_notes">Notes / known issues</h2>
-
-	<ol>
-		<li>When a plugin is saved to the plugin_cache_dir, if you have not put <code>&lt;style&gt;</code> markers in your <span class="caps">CSS</span> block they will be added for you in the text area but <em>not</em> saved in the actual template until you save it again (exporting as a <span class="caps">PHP</span> file is unaffected). So if you are in the habit of manually downloading the file from your <span class="caps">FTP</span> client immediately after a save, just save the plugin again to be sure.</li>
-		<li>Loading Textpack strings from a gTxt function won&#8217;t work unless you (perhaps temporarily) switch your plugin to one of the <span class="caps">AJAX</span> types.</li>
-	</ol>
-
-	<h2>Writing a plugin</h2>
-
-	<p>You should be aware of the <a href="http://forum.textpattern.com/viewtopic.php?id=9881">Plugin Author Resources</a> topic on the Textpattern Support Forum, and you might also want to have a look at the tutorials and guides for <a href="http://textpattern.net/wiki/index.php?title=Extending_Textpattern">Extending Textpattern</a> in the Textpattern documentation.</p>
-
-	<p>Happy plugin authoring :-)</p>
-
-	<h2>Authors</h2>
-
-	<p>Original plugin: <a href="http://inspired.kiev.ua/feedback/">Yura Linnyk</a><br />
-Modifications (v0.5+): <a href="http://stefdawson.com/commentForm">Stef Dawson</a><br />
-A touch of class: <a href="http://txp-plugins.netcarving.com/contact">Steve Dickinson</a><br />
-Plus help from a host of forum contributors too numerous to mention. You know who you are ;-)</p>
-
-	<h2 id="changelog">Changelog</h2>
-
-	<ul>
-		<li>25 Feb 2006 | 0.1 | Initial release</li>
-		<li>25 Feb 2006 | 0.2 | Added &#8216;save as&#8217; option</li>
-		<li>17 Mar 2006 | 0.3 | Added &#8216;save as php&#8217;</li>
-		<li>10 Apr 2006 | 0.4 | Added support for plugin_cache_dir</li>
-		<li>04 Jan 2008 | 0.5 | Full support for standard template; compressed plugins; library plugins; Textile help and styling; integration with net-carver&#8217;s Plugin Help Viewer</li>
-		<li>07 Jan 2008 | 0.6 | Built-in help viewer (thanks net-carver); support for Edit Area &amp; CodePress(ish) (thanks variaas); Help block/Code block position switchable on export; added Setup prefs page; line break/style bugfixes</li>
-		<li>08 Jan 2008 | 0.7 | Re-importing plugins now retains style block; added &#8216;admin side plugin with public-side type&#8217; warning; changed button styling and positions (all thanks net-carver); gTxt() pref labels and &#8216;intelligent&#8217; prefs (go jQuery go!); cached plugins now also have direct export from Edit panel; &#8216;don&#8217;t textile <span class="caps">HTML</span>&#8217; check; minor bugfixes</li>
-		<li>09 Jan 2008 | 0.71 | Textarea width can now be controlled from prefs, and height from a drag bar; default width increased to 110 chars; publish plugins from the list panel; Install button removed when prefs all correctly installed (all thanks variaas / iblastoff)</li>
-		<li>10 Jan 2008 | 0.72 | Fixed bug if plugin has no help; style section no longer stored/exported if it&#8217;s not in use (thanks the_ghost / iblastoff)</li>
-		<li>11 Jan 2008 | 0.73 | Added support for <em>reading</em> an optional revision from the template parser and appending it to the version (thanks net-carver); more gTxt() strings converted</li>
-		<li>28 Mar 2008 | 0.74 | Fixed empty plugin code if Style block left blank ; fixed strip/slash/encoding errors (thanks the_ghost/ruud) ; fixed crlf newlines in code block (thanks hakjoon/ruud)</li>
-		<li>28 May 2008 | 0.75 | Added &#8216;modified&#8217; to the Version column (thanks uli) ; added ability to rename files in the plugin cache dir when the version changes</li>
-		<li>03 Nov 2008 | 0.8 | Added support for recommended plugin load order ; added Admin-only plugin type; added ability to override filename format on export ; added restore point/rollback (thanks maverick) ; added character count (thanks pepebe) ; rationalised the list and edit panels ; sped up export/save routines ; fixed a few corner case bugs (e.g. empty plugin name, missing quotes in template options)</li>
-		<li>03 Jan 2009 | 0.81 | Added textile cacheing to improve performance with large help files ; profiled code and improved speed in various functions</li>
-		<li>23 Feb 2009 | 0.82 | Can now create new template files on the fly (thanks azw) ; fixed Textile limit on large help files ; fixed database calls for MySQL strict mode (thanks Gocom / azw)</li>
-		<li>11 Apr 2009 | 0.83 | Fixed help file <span class="caps">CSS</span> output so it validates ; use <code>$prefs</code> instead of <code>$GLOBALS</code> internally ; check if plugin_cache_dir exists before trying to use it on the list panel</li>
-		<li>29 Aug 2009 | 0.9 | Requires Txp 4.2.0+ ; added support for plugin prefs/lifecycle and larger plugin code ; fixed <span class="caps">CSS</span> delimiter for backwards compatibility ; new plugin template details used</li>
-		<li>11 Feb 2010 | 0.91 | Added Jump To Line capability &#8212; in most browsers (thanks thebombsite)</li>
-		<li>03 Nov 2010 | 0.92 | Fixed Options link for plugins from cache dir and fixed escaping of exported php files (both thanks maniqui) ; fixed escaping when importing from <span class="caps">PHP</span> file ; cosmetic tweaks (plugin_cache_dir section only displayed if there are valid <span class="caps">PHP</span> files, and View Help link adjusted) ; fixed jQuery on setup panel ; extended resizer cookie to one year expiry</li>
-		<li>23 Nov 2010 | 0.93 | Fixed setup screen &#8216;undefined&#8217; bug (thanks MarcoK)</li>
-		<li>09 Dec 2012 | 1.00 | Added Textpack support and management ; permitted more installation / creation options ; retooled the UI for Txp 4.5.x ; added dedicated <b>Save Code</b> button with syntax check for rapid saving via <span class="caps">AJAX</span> ; made &#8216;distribution&#8217; and &#8216;style&#8217; blocks optional to speed up full saves ; added support for lifecycle events ; supports the two new <span class="caps">AJAX</span> plugin types introduced in Txp 4.5.0 ; more options for multi edit changestatus</li>
-	</ul>
+Once you have that in place, here are some steps you can go through to convert your plugin and grab all the necessary strings en masse:
+
+# inside your plugin's gTxt() function, ensure that all keys are prefixed with your nominated plugin prefix.
+# globally replace any reference to @abc_plugin_gTxt('@ with @abc_plugin_gTxt('abc_prefix_@, if not already.
+# save the plugin from the composer window.
+# enter the Textpack prefix if it's not already set.
+# give the name of your gTxt function, e.g. @ied_plugin_gTxt@ in the __Load strings from function__ box. If your @gTxt()@ method is inside a class, specify @class_name::method_name@ instead.
+# hit 'Go'.
+
+If the composer can execute your chosen function then it'll do so and return the strings as defined inside the function, populate each Textpack string and save it for you in the database automatically. Once that's done and all strings are populated you can then:
+
+# globally replace any calls to @abc_plugin_gTxt@ with the core @gTxt@ in your plugin code.
+# delete your abc_plugin_gTxt function.
+
+Textpack strings are also written to the file of any plugin you are editing in the cache_dir when you Save the plugin, as long as you are using a recent template that has the  @$plugin['textpack']@ string in it.
+
+*Switching language*
+
+If at any time you want to see the installed textpack strings in other languages, simply use the select list to choose one. Any defined strings will be loaded into the textpack fields. You'll see a counter whizzing up to show you how far it's gone. As a translation aid, the equivalent string in your nominated default language (see "setup":#ied_plugin_setup) will be displayed as you hover over the textpack entry. You can choose to translate strings yourself or you can defer translation to other members of the community after the plugin is published. Textpacks can be linked to your textpattern.org plugin page by contributors and installed at any time from Textpattern's __Languages__ tab.
+
+h3. Plugin help
+
+Documentation for detailing the plugin usage. Can (probably should!) be written using "Textile":http://textpattern.com/textile-sandbox. There are some "documentation guidelines":http://textpattern.net/wiki/index.php?title=Creating_Plugin_Help_Guidelines that serve as a good starting point. Note that the character countdown here is only approximate because when your plugin is saved and the help is converted to HTML, it usually takes up more space than Textile; please check that your help file renders correctly when your plugin is exported.
+
+The _Style_ box is for any CSS style rules you wish to apply to your documentation, although you should not need this with modern admin themes. You are encouraged to reuse the admin's core CSS rules as often as possible, but if there isn't one that suits, it's best to target your documentation specifically by surrounding the entire Plugin Help section with something like: @<div id="abc_help">h1. Docs go here...</div>@.
+
+Note that both the Plugin Help and Style are governed by a size limit. Since they are both stored in the same 64kB field, the size is shared between them. Styles are _not_ passed through the Textile processor and you don't need to add the @<style>@ tags; the composer will do that for you (but see the "notes":#ied_plugin_notes).
+
+h3. Distribution
+
+Once you have saved your plugin, there is a section right at the bottom that allows you to export your plugin in a variety of formats. Above the links is a language select box that governs how Textpacks are dealt with. If you choose the first (empty) item then no Textpack information is included in the exported file. The only exception is when you save Textpacks directly: the first item is a shortcut for 'all languages' to save you having to select them all.
+
+* *Plugin code for distribution* : is a direct copy 'n' paste area that contains your entire plugin + docs. You can take this entire area and paste it into the 'Install plugin' box. Since this adds to the time it takes to do a full save of the plugin, this portion is optional and can be enabled from the "setup panel":#ied_plugin_setup.
+* *Export as abc_myplugin.txt* : converts the plugin help to HTML and saves the plugin to your computer as a redistributable text file for other Textpattern users to install. If you have chosen any Textpack languages from the adjacent select list, they will be bundled with your plugin and thus installed automatically along with the plugin.
+* *Export as abc_myplugin.txt (compressed)* : converts the plugin help to HTML and saves the plugin as a redistributable, gzipped text file for other Textpattern users to install. Useful for large plugins or to offer an alternative for people who have stringent size limits imposed by their host. Textpack strings are bundled too if you have chosen at least one language from the select list.
+* *Export as abc_myplugin.php* : saves the plugin in a Textpattern standard template format. Useful for keeping the plugin for yourself -- complete with Textiled help markup -- so it can be later edited and re-issued / updated or shared with other developers who have the plugin composer or zem_tpl.php compiler. Textpack strings are bundled as part of the template if you choose.
+* *Export Textpack(s)* : choose one or more languages from the select list to gather all your plugin's Textpack strings and download them as a redistributable text file for other textpattern users to install or modify. You (or anyone else) can / will be able to upload links to Textpacks on textpattern.org so they are available from a central location.
+
+Note that when exporting as a standard plugin, the Textile processor attempts to decide if you have used Textile or not; it simply looks for a textiled header (@h1.@ through @h6.@). Running pure HTML through Textile may occasionally cause encoding issues depending on the original character set used so it is always best to try and stick to Textile as the documentation system.
+
+h2(#ied_plugin_restore). Restore points
+
+When a plugin is installed, a copy is kept in the database. If the plugin code (not help text) is subsequently edited, the plugin is considered "modified"; indicated in the plugin composer's List panel. Sometimes you may wish to revert any changes back to the as-installed state.
+
+Any time a plugin is marked as 'modified', the version number becomes clickable from the "List panel":#ied_plugin_list. Clicking it (and confirming you are sure) will wipe out any changes you made and return the plugin to its installed state.
+
+During the editing process of your own plugins, it may be that at certain times you wish to put a stake in the ground and say "this is my current baseline that I might want to return to later". Perhaps you are about to make some major edits or try something experimental and want an easy fallback mechanism. That's where the "Restore point" checkbox comes in.
+
+By checking the box when you save your plugin, the current code will become your new rollback point and the plugin will no longer be marked "modified". Any changes made beforehand will not be recoverable so you will have to rely on your own backups if you wish to go back further. Any edits you make after creating a restore point can be undone by visiting the List panel and clicking the version number next to your plugin. Currently, only one rollback point can be stored in the database.
+
+h2(#ied_plugin_setup). Setup panel
+
+Clicking Setup from the main "List panel":#ied_plugin_list allows access to the plugin setting.
+
+; *Plugin editor*
+: You may choose to edit the code using a 3rd party syntax highlighter. Current support is for EditArea, CodeMirror and CodePress.
+: Choose the system here, and specify the URL(s) of the scripts and stylesheets in the box beneath. If your chosen editor requires more than one file to be loaded then list them all, separated by commas. If any of the files are stylesheets, prefix the name with @css:@ so the plugin knows to insert a @<link rel="stylesheet" ...>@ instead of a @<script>@ tag.
+: If you want to supply any configuration options to the editor, type them in the *Plugin editor configuration options* textarea. Write them as name:value pairs separated by comma, exactly as you would if initialisaing the script according to their documentation.
+; *Plugin editor width*
+: The size of the textareas on the "edit panel":#ied_plugin_edit. Set to suit your screen resolution. Include the units (px, em, %, etc) if you wish; it'll default to pixels if you omit them.
+; *Help editor*
+: You may choose to edit the help manually via Textile or use TinyMCE for a more WYSIWYG experience.
+: In a similar manner to the plugin code editor you need to tell the composer the URL to the javascript file. You can also supply configuration options. The defaults should give you a head start on how to use them: consult the TinyMCE documentation for more.
+; *Optional interface elements*
+: Choose which parts of the "Edit panel":#ied_plugin_edit you want to be visible in the interface.
+; *Perform lifecycle actions on*
+: When plugins are installed, enabled, disabled or deleted plugins can run code to perform installation or cleanup actions. Choose which ones you wish to permit when installing, enabling/disabling or deleting plugins from the composer's "List panel":#ied_plugin_list.
+: The value of the 'install' checkbox chosen here becomes the default option in the _Perform post-install actions_ radio button under the _Install_ textarea.
+; *Auto-enable plugins on install*
+: Whether to allow plugins to automatically switch on after installation, or to retain their previous status.
+: The setting chosen here becomes the default radio button selection under the _Install_ textarea on the list panel.
+; *Syntax check on code save*
+: Whether to run the code through the syntax checker or not when you use the **Save Code** button. Highly recommended to save your admin side from breakage during development.
+; *Textpack language list*
+: Whether to only allow editing of strings from the currently installed languages, or all available Textpattern languages.
+; *Default Textpack language*
+: The primary language for your plugin strings (default = any). If you choose a language that is not installed (and you're limiting the language list to only those installed) the default language will revert to your current admin-side language.
+: Note that if you set a language here, when you export Textpacks or build plugins, that will be the language expected to be installed in a user's Textpattern. If you leave it at 'any' the language marker is omitted from the Textpack and thus the strings bundled with the plugin (which may be in English) will install into whichever language is the user's default (which may be something other than English). By forcing the default language, you force the language marker in the plugin. Thus if your users don't have that language installed (e.g. someone only has nl-nl installed and not English) and they install your plugin, it will look at the installed language (nl-nl), compare it to the one in the plugin (en-gb), find it doesn't match and will skip the Textpack installation. This will leave the user's interface with lots of ugly @abc_plugin_some_item@ strings instead of the actual translated content.
+: This could be handy if you are distributing Textpacks separately and have a good stock of them, or have loads of Textpacks bundled with the plugin, but for 95% of cases it is best to leave the default textpack language at @Any@ so users of your plugin are guaranteed to get some translated strings, even if they are not in their 'local' language. They can then at least translate them and make the Textpack available to other users.
+; *PHP export order*
+: When saving your plugin in the standard template format, this governs whether you prefer the code block to be at the top of the file and the help block below, or vice versa.
+; *Export plugin filename format*
+; *Export compressed filename format*
+; *Export template filename format*
+; *Textpack filename format*
+: These define the format of the filenames when you export plugins/Textpacks. The first is for when you export standard BASE-64 plugins; the second is for compressed plugins; the third is for exporting a standard PHP template, and finally for exporting Textpacks.
+: Wherever you type @{name}@, the plugin name will appear. Similarly, @{version}@ will be replaced with the current plugin version number. And @{lang}@ will be replaced with either 1) the chosen language code, like en-gb; 2) 'all' if you chose to export all textpacks as one file; 3) an abbreviated list of countries to which the languages in the pack apply if you choose to export more than one, e.g. @en+fi+nl+fr+de@.
+: You can type anything you like in these boxes, but it's more useful to include the replacement strings somewhere in each box so you don't get name / version clashes. For example, if you don't like the fact that zipped plugins are exported as @pfx_my_plugin_v0.1_zip.txt@, you can change it. Perhaps you may prefer @pfx_my_plugin-compressed-0.1.txt@. In which case, set the 2nd box to @{name}-compressed-{version}.txt@.
+: Note the extension should usually be specified so your system/browser knows the file's type when it is exported, but it's not mandatory as the MIME type is given so (good) browsers should read that.
+; *Cache Textiled help path*
+: If you wish to take advantage of help cacheing, put the path to a temporary directory in the box. Empty the box if you prefer saves and exports to be slower!
+: Defaults to Textpattern's temporary directory.
+
+h2(#ied_plugin_notes). Notes / known issues
+
+# When a plugin is saved to the plugin_cache_dir, if you have not put @<style>@ markers in your CSS block they will be added for you in the text area but _not_ saved in the actual template until you save it again (exporting as a PHP file is unaffected). So if you are in the habit of manually downloading the file from your FTP client immediately after a save, just save the plugin again to be sure.
+# Loading Textpack strings from a gTxt function won't work unless you (perhaps temporarily) switch your plugin to one of the AJAX types.
+
+h2. Writing a plugin
+
+You should be aware of the "Plugin Author Resources":http://forum.textpattern.com/viewtopic.php?id=9881 topic on the Textpattern Support Forum, and you might also want to have a look at the tutorials and guides for "Extending Textpattern":http://textpattern.net/wiki/index.php?title=Extending_Textpattern in the Textpattern documentation.
+
+Happy plugin authoring :-)
+
+h2. Authors
+
+Original plugin: "Yura Linnyk":http://inspired.kiev.ua/feedback/
+Modifications (v0.5+): "Stef Dawson":http://stefdawson.com/commentForm
+A touch of class: "Steve Dickinson":http://txp-plugins.netcarving.com/contact
+Plus help from a host of forum contributors too numerous to mention. You know who you are ;-)
+
+h2(#changelog). Changelog
+
+* 25 Feb 2006 | 0.1 | Initial release
+* 25 Feb 2006 | 0.2 | Added 'save as' option
+* 17 Mar 2006 | 0.3 | Added 'save as php'
+* 10 Apr 2006 | 0.4 | Added support for plugin_cache_dir
+* 04 Jan 2008 | 0.5 | Full support for standard template; compressed plugins; library plugins; Textile help and styling; integration with net-carver's Plugin Help Viewer
+* 07 Jan 2008 | 0.6 | Built-in help viewer (thanks net-carver); support for Edit Area & CodePress(ish) (thanks variaas); Help block/Code block position switchable on export; added Setup prefs page; line break/style bugfixes
+* 08 Jan 2008 | 0.7 | Re-importing plugins now retains style block; added 'admin side plugin with public-side type' warning; changed button styling and positions (all thanks net-carver); gTxt() pref labels and 'intelligent' prefs (go jQuery go!); cached plugins now also have direct export from Edit panel; 'don't textile HTML' check; minor bugfixes
+* 09 Jan 2008 | 0.71 | Textarea width can now be controlled from prefs, and height from a drag bar; default width increased to 110 chars; publish plugins from the list panel; Install button removed when prefs all correctly installed (all thanks variaas / iblastoff)
+* 10 Jan 2008 | 0.72 | Fixed bug if plugin has no help; style section no longer stored/exported if it's not in use (thanks the_ghost / iblastoff)
+* 11 Jan 2008 | 0.73 | Added support for _reading_ an optional revision from the template parser and appending it to the version (thanks net-carver); more gTxt() strings converted
+* 28 Mar 2008 | 0.74 | Fixed empty plugin code if Style block left blank ; fixed strip/slash/encoding errors (thanks the_ghost/ruud) ; fixed crlf newlines in code block (thanks hakjoon/ruud)
+* 28 May 2008 | 0.75 | Added 'modified' to the Version column (thanks uli) ; added ability to rename files in the plugin cache dir when the version changes
+* 03 Nov 2008 | 0.8 | Added support for recommended plugin load order ; added Admin-only plugin type; added ability to override filename format on export ; added restore point/rollback (thanks maverick) ; added character count (thanks pepebe) ; rationalised the list and edit panels ; sped up export/save routines ; fixed a few corner case bugs (e.g. empty plugin name, missing quotes in template options)
+* 03 Jan 2009 | 0.81 | Added textile cacheing to improve performance with large help files ; profiled code and improved speed in various functions
+* 23 Feb 2009 | 0.82 | Can now create new template files on the fly (thanks azw) ; fixed Textile limit on large help files ; fixed database calls for MySQL strict mode (thanks Gocom / azw)
+* 11 Apr 2009 | 0.83 | Fixed help file CSS output so it validates ; use @$prefs@ instead of @$GLOBALS@ internally ; check if plugin_cache_dir exists before trying to use it on the list panel
+* 29 Aug 2009 | 0.9 | Requires Txp 4.2.0+ ; added support for plugin prefs/lifecycle and larger plugin code ; fixed CSS delimiter for backwards compatibility ; new plugin template details used
+* 11 Feb 2010 | 0.91 | Added Jump To Line capability -- in most browsers (thanks thebombsite)
+* 03 Nov 2010 | 0.92 | Fixed Options link for plugins from cache dir and fixed escaping of exported php files (both thanks maniqui) ; fixed escaping when importing from PHP file ; cosmetic tweaks (plugin_cache_dir section only displayed if there are valid PHP files, and View Help link adjusted) ; fixed jQuery on setup panel ; extended resizer cookie to one year expiry
+* 23 Nov 2010 | 0.93 | Fixed setup screen 'undefined' bug (thanks MarcoK)
+* 16 Mar 2013 | 1.00 | Added Textpack support and management ; permitted more installation / creation options ; retooled the UI for Txp 4.5.x ; added dedicated **Save Code** button with syntax check for rapid saving via AJAX ; made 'distribution' and 'style' blocks optional to speed up full saves ; added support for firing lifecycle events ; supports the two new AJAX plugin types introduced in Txp 4.5.0 ; more options for multi edit changestatus
 # --- END PLUGIN HELP ---
 -->
 <?php
