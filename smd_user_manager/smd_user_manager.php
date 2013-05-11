@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_user_manager';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.11';
+$plugin['version'] = '0.20';
 $plugin['author'] = 'Stef Dawson';
 $plugin['author_uri'] = 'http://stefdawson.com/';
 $plugin['description'] = 'Manage user accounts, groups and privileges';
@@ -28,7 +28,7 @@ $plugin['description'] = 'Manage user accounts, groups and privileges';
 // (1...4) to prepare the environment for everything else that follows.
 // Values 6...9 should be considered for plugins which would work late.
 // This order is user-overrideable.
-$plugin['order'] = '9';
+$plugin['order'] = '8';
 
 // Plugin 'type' defines where the plugin is loaded
 // 0 = public              : only on the public side of the website (default)
@@ -37,7 +37,7 @@ $plugin['order'] = '9';
 // 3 = admin               : only on the admin side (no AJAX)
 // 4 = admin+ajax          : only on the admin side (AJAX supported)
 // 5 = public+admin+ajax   : on both the public and admin side (AJAX supported)
-$plugin['type'] = '1';
+$plugin['type'] = '5';
 
 // Plugin "flags" signal the presence of optional capabilities to the core plugin loader.
 // Use an appropriately OR-ed combination of these flags.
@@ -45,7 +45,7 @@ $plugin['type'] = '1';
 if (!defined('PLUGIN_HAS_PREFS')) define('PLUGIN_HAS_PREFS', 0x0001); // This plugin wants to receive "plugin_prefs.{$plugin['name']}" events
 if (!defined('PLUGIN_LIFECYCLE_NOTIFY')) define('PLUGIN_LIFECYCLE_NOTIFY', 0x0002); // This plugin wants to receive "plugin_lifecycle.{$plugin['name']}" events
 
-$plugin['flags'] = '2';
+$plugin['flags'] = '3';
 
 // Plugin 'textpack' is optional. It provides i18n strings to be used in conjunction with gTxt().
 // Syntax:
@@ -54,18 +54,57 @@ $plugin['flags'] = '2';
 // #@language ISO-LANGUAGE-CODE
 // abc_string_name => Localized String
 
-/** Uncomment me, if you need a textpack
-$plugin['textpack'] = <<< EOT
-#@admin
-#@language en-gb
-abc_sample_string => Sample String
-abc_one_more => One more
-#@language de-de
-abc_sample_string => Beispieltext
-abc_one_more => Noch einer
+$plugin['textpack'] = <<<EOT
+#@smd_um
+smd_um_active => Users currently active: 
+smd_um_active_timeout => Activity timeout (seconds)
+smd_um_admin_group => Protected administrator group
+smd_um_article_count => Articles
+smd_um_based_on => based on
+smd_um_chp_lbl => Change pass
+smd_um_file_count => Files
+smd_um_grp_affected => . Users affected: {num}
+smd_um_grp_created => Group "{name}" created
+smd_um_grp_deleted => Group deleted
+smd_um_grp_exists => Group already exists as priv ID {id}
+smd_um_grp_lbl => Groups
+smd_um_grp_new => New group title
+smd_um_grp_new_name => name
+smd_um_grp_saved => Group info updated
+smd_um_heading_grp => User groups
+smd_um_heading_prf => User manager settings
+smd_um_heading_prv => User privileges
+smd_um_heading_usr => User management
+smd_um_hierarchical_groups => Assume hierarchical groups (levels)
+smd_um_image_count => Images
+smd_um_link_count => Links
+smd_um_max_search_limit => Maximum user search result limit
+smd_um_name_required => A name is required
+smd_um_new_user => New user
+smd_um_pass_change_error => Password NOT saved
+smd_um_pass_length => Password length (characters)
+smd_um_prf_lbl => Prefs
+smd_um_prv_created => Priv area "{area}" created
+smd_um_prv_exists => Priv area already exist
+smd_um_prv_lbl => Privs
+smd_um_prv_new => New priv area
+smd_um_prv_saved => Privs updated
+smd_um_prv_smd_um => Cannot create privs for smd_user_manager
+smd_um_reset => [R]
+smd_um_self_alter => Allow smd_um privs to be altered
+smd_um_sel_all => Select the entire area then (c)heck, (u)ncheck or (t)oggle highlighted checkboxes
+smd_um_sel_grp => Select this group then (c)heck, (u)ncheck or (t)oggle highlighted checkboxes
+smd_um_sel_prv => Select this area set then (c)heck, (u)ncheck or (t)oggle highlighted checkboxes
+smd_um_sel_reset => Reset: any checked area sets will revert to their defaults after Save
+smd_um_settings => Settings
+smd_um_tab_name => User manager
+smd_um_tbl_installed => Tables installed
+smd_um_tbl_not_installed => Tables not installed
+smd_um_tbl_not_removed => Tables not removed
+smd_um_tbl_removed => Tables removed
+smd_um_user_count => Users in this group: 
+smd_um_usr_lbl => Users
 EOT;
-**/
-// End of textpack
 
 if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
@@ -83,6 +122,10 @@ if (!defined('txpinterface'))
  * @author Stef Dawson
  * @link   http://stefdawson.com/
  */
+
+// TODO:
+//  -> Why does multi-edit fire twice? Is it still attached to the Admin->Users table?
+
 if (!defined('SMD_UM_PRIVS')) {
 	define("SMD_UM_PRIVS", 'smd_um_privs');
 }
@@ -91,27 +134,9 @@ if (!defined('SMD_UM_GROUPS')) {
 }
 
 if(@txpinterface == 'admin') {
-	global $smd_um_event, $smd_um_styles, $smd_um_prefs, $txp_permissions, $txp_groups, $txp_user, $event, $step;
-	$smd_um_event = 'smd_um';
+	global $smd_um_event, $txp_permissions, $txp_groups, $txp_user, $step;
 
-	// Styles include a hack for Remora (#nav li ul) to prevent menu from disappearing under the
-	// privs content. This only occurs because the .smd_um_privgroup class uses position:relative.
-	// Needs workaround as it affects other plugins.
-	$smd_um_styles = array(
-		'control-panel' =>
-'#smd_um_control { text-align:center; }
-#smd_um_control .search-form, #smd_um_control .smd_um_title, .smd_um_buttons { display:inline-block; margin:0 30px; }
-.smd_um_privgroup { margin:10px auto; width:50%; position:relative; }
-.smd_um_privgroup h2 { text-align:left; font-weight:bold; }
-.smd_active { font-weight:bold; }
-.smd_um_privsave { position:absolute; left:-55px; top:0; }
-.smd_um_title { font-size: 130%; margin:0 30px 10px!important; }
-.smd_um_active_users { margin:15px auto; text-align:center; width:80%; }
-.smd_um_selected { background-color:#e2dfce; }
-.smd_um_grp_name, .smd_um_prv_name, .smd_um_reset_col { cursor:pointer; }
-.smd_um_checkbox, .smd_um_prv_hdr { text-align:center!important; }
-#nav li ul { z-index:10000; }',
-	);
+	$smd_um_event = 'smd_um';
 
 	add_privs($smd_um_event.'.usr.list', '1, 2, 3');
 	add_privs($smd_um_event.'.usr.edit', '1, 2');
@@ -119,12 +144,15 @@ if(@txpinterface == 'admin') {
 	add_privs($smd_um_event.'.grp', '1');
 	add_privs($smd_um_event.'.prv', '1');
 	add_privs($smd_um_event.'.prf', '1');
-	register_tab('admin', $smd_um_event, smd_um_gTxt('smd_um_tab_name'));
-	register_callback('smd_um_dispatcher', 'admin');
+	add_privs('plugin_prefs.smd_user_manager', '1');
+	register_tab('admin', $smd_um_event, gTxt('smd_um_tab_name'));
+	register_callback('smd_um_silence', 'admin');
 	register_callback('smd_um_dispatcher', $smd_um_event);
 	register_callback('smd_um_dispatcher', $smd_um_event.'.usr.edit.own');
 	register_callback('smd_um_users_tab', 'admin_side', 'head_end');
+	register_callback('smd_um_prefs', 'plugin_prefs.smd_user_manager');
 	register_callback('smd_um_welcome', 'plugin_lifecycle.smd_user_manager');
+	register_callback('smd_um_inject_css', 'admin_side', 'head_end');
 
 	// Log the time of this access attempt
 	$curr_users = unserialize(get_pref('smd_um_current_users', ''));
@@ -148,74 +176,96 @@ if(@txpinterface == 'admin') {
 	// otherwise we won't know what the defaults (in admin_config.php) are
 	$do_privs = (($step == 'smd_um_privs') && ps('smd_um_priv_save')) ? 0 : 1;
 	smd_um_priv_merge(0, $do_privs);
-
-	$smd_um_prefs = array(
-		'smd_um_hierarchical_groups' => array(
-			'html'     => 'yesnoradio',
-			'type'     => PREF_HIDDEN,
-			'position' => 10,
-			'default'  => '0',
-		),
-		'smd_um_admin_group' => array(
-			'html'     => 'selectlist',
-			'type'     => PREF_HIDDEN,
-			'position' => 20,
-			'content'  => array(get_groups(), false),
-			'default'  => '1',
-		),
-		'smd_um_max_search_limit' => array(
-			'html'     => 'text_input',
-			'type'     => PREF_HIDDEN,
-			'position' => 30,
-			'default'  => '500',
-		),
-		'smd_um_pass_length' => array(
-			'html'     => 'text_input',
-			'type'     => PREF_HIDDEN,
-			'position' => 40,
-			'default'  => '12',
-		),
-		'smd_um_active_timeout' => array(
-			'html'     => 'text_input',
-			'type'     => PREF_HIDDEN,
-			'position' => 50,
-			'default'  => '60',
-		),
-		'smd_um_self_alter' => array(
-			'html'     => 'yesnoradio',
-			'type'     => PREF_HIDDEN,
-			'position' => 60,
-			'default'  => '0',
-		),
-	);
 }
 
 // ********************
 // ADMIN SIDE INTERFACE
 // ********************
+
+// -------------------------------------------------------------
+// CSS definitions: hopefully kind to themers
+// Includes a hack for Remora (#nav li ul) to prevent menu from disappearing under the
+// privs content. This only occurs because the .smd_um_privgroup class uses position:relative.
+// Needs workaround as it affects other plugins.
+function smd_um_get_style_rules() {
+	$smd_um_styles = array(
+		'control-panel' => '
+.smd_um_privgroup { margin:10px auto; width:50%; position:relative; }
+.smd_um_privgroup h3 { text-align:left; font-weight:bold; }
+.smd_um_privsave { position:absolute; left:-55px; top:0; }
+.smd_um_active_users { margin:15px auto; width:80%; text-align:center; }
+.smd_um_selected { background-color:#e2dfce; }
+.smd_um_grp_name, .smd_um_prv_name, .smd_um_reset_col { cursor:pointer; }
+.smd_um_checkbox, .smd_um_prv_hdr { text-align:center!important; }
+#nav li ul { z-index:10000; }
+',
+	);
+
+	return $smd_um_styles;
+}
+
+// -------------------------------------------------------------
+function smd_um_inject_css($evt, $stp) {
+	global $smd_um_event, $event;
+
+	if ($event == $smd_um_event || $event == 'admin') {
+		$smd_um_styles = smd_um_get_style_rules();
+
+		echo '<style type="text/css">', $smd_um_styles['control-panel'], '</style>';
+	}
+
+	return;
+}
+
+
+// -------------------------------------------------------------
+// Destroy the existing Admin->Users tab if we come from any smd_um-initiated step
+function smd_um_silence($evt, $stp) {
+	global $event, $smd_um_event;
+
+	$ignore = array(
+		'author_list',
+		'author_edit',
+		'author_save',
+		'author_save_new',
+		'change_pass',
+	);
+
+	$no_dispatch = array(
+		'change_pass',
+	);
+
+	if (!in_array($stp, $ignore)) {
+		ob_end_clean(); // Kill any existing Admin tab panel...
+		ob_start(); // ... and start again
+		$event = $smd_um_event;
+
+		if (!in_array($stp, $no_dispatch)) {
+			smd_um_dispatcher($event, $stp);
+		}
+	}
+}
+
+// -------------------------------------------------------------
 // Plugin jump off point
-function smd_um_dispatcher($evt, $stp) {
-	global $smd_um_event, $txp_permissions, $txp_user, $event;
+function smd_um_dispatcher($evt, $stp, $msg='') {
+	global $smd_um_event, $txp_permissions, $txp_user;
 
-	ob_end_clean(); // Kill any existing Admin tab panel...
-	ob_start(); // ... and start again
-
-	$event = $smd_um_event;
-	$stp = gps('step');
 	$available_steps = array(
-		'smd_um'               => false,
-		'smd_um_edit'          => false,
-		'smd_um_save'          => true,
-		'smd_um_save_new'      => true,
-		'smd_um_groups'        => true,
-		'smd_um_privs'         => true,
-		'smd_um_prefs'         => true,
-		'smd_um_multi_edit'    => true,
-		'smd_um_change_pass'   => true,
-		'smd_um_change_pageby' => true,
-		'smd_um_table_install' => true,
-		'smd_um_table_remove'  => true,
-		'save_pane_state'      => true,
+		'smd_um'                  => false,
+		'smd_um_edit'             => false,
+		'smd_um_save'             => true,
+		'smd_um_save_new'         => true,
+		'smd_um_groups'           => false,
+		'smd_um_privs'            => false,
+		'smd_um_prefs'            => false,
+		'smd_um_multi_edit'       => true,
+		'smd_um_change_pass'      => true,
+		'smd_um_change_pass_form' => false,
+		'smd_um_change_pageby'    => true,
+		'smd_um_table_install'    => true,
+		'smd_um_table_remove'     => true,
+		'save_pane_state'         => true,
 	);
 
 	if (!has_privs($smd_um_event.'.usr.list')) {
@@ -228,12 +278,18 @@ function smd_um_dispatcher($evt, $stp) {
 			$_POST['user_id'] = $uid;
 		}
    }
+
 	if ($stp == 'save_pane_state') {
 		smd_um_save_pane_state();
-	} else if (!$stp or !bouncer($stp, $available_steps)) {
-		$stp = $smd_um_event;
+	} else if ($stp && bouncer($stp, $available_steps)) {
+		if ($msg) {
+			$stp($msg);
+		} else {
+			$stp();
+		}
+	} else {
+		$smd_um_event($msg);
 	}
-	$stp();
 }
 
 // ------------------------
@@ -241,19 +297,27 @@ function smd_um_dispatcher($evt, $stp) {
 // May fail with inventive DOM structures / themes
 // (note to self: campaign for improvement in this area because jQuery smells hackish)
 function smd_um_users_tab() {
+	global $event;
+
 	$userStr = gTxt('tab_site_admin');
-	echo <<< EOJS
-<script type="text/javascript">
-	jQuery(function() {
-		jQuery("a[href='?event=admin']").each(function() {
-			me = jQuery(this);
-			if (me.text() == "{$userStr}") {
-				me.parent().hide();
-			}
-		});
+	echo script_js(<<<EOJS
+jQuery(function() {
+	jQuery("a[href='?event=admin']").each(function() {
+		me = jQuery(this);
+		if (me.text() == "{$userStr}") {
+			me.parent().hide();
+		}
 	});
-</script>
-EOJS;
+	if ('{$event}' == 'admin') {
+		jQuery("a[href='?event=smd_um']").each(function() {
+			me = jQuery(this);
+			me.parent().removeClass('inactive').addClass('active'); // Hive, etc
+			me.removeClass('tabdown').addClass('tabup'); // Classic, etc
+		});
+	}
+});
+EOJS
+	);
 }
 
 // ------------------------
@@ -274,16 +338,17 @@ function smd_um_welcome($evt, $stp) {
 // ------------------------
 // Main user display list
 function smd_um($msg='') {
-	global $smd_um_event, $smd_um_prefs, $txp_user, $smd_um_list_pageby, $smd_um_styles;
+	global $step, $smd_um_event, $txp_user, $smd_um_list_pageby;
 
 	require_privs($smd_um_event.'.usr.list');
+
+	$smd_um_prefs = smd_um_get_prefs();
 
 	if (!smd_um_table_exist(1)) {
 		smd_um_table_install(0);
 	}
 
-	pagetop(smd_um_gTxt('smd_um_tab_name').' &raquo; '.smd_um_gTxt('smd_um_usr_lbl'), $msg);
-	extract(smd_um_buttons('usr'));
+	pagetop(gTxt('smd_um_tab_name').' &raquo; '.gTxt('smd_um_usr_lbl'), $msg);
 
 	extract(gpsa(array('page', 'sort', 'dir', 'crit', 'search_method')));
 	if ($sort === '') $sort = get_pref('smd_um_sort_column', 'login');
@@ -407,23 +472,26 @@ function smd_um($msg='') {
 	// so a straight query is performed with a loop to increment the total. getThing() or getRows for some reason
 	// failed under certain conditions
 	$total = 0;
+
+	// Call this so plugins that hook into the step can play
+	$criteria .= callback_event('admin_criteria', 'author_list', 0, $criteria);
+
 	$totrs = safe_query('SELECT '.$fields.$clause.' HAVING '.$criteria);
 	while ($row = nextRow($totrs)) {
 		$total++;
 	}
 
-	$btnbar = '<span class="smd_um_buttons">'.$btnUsr.$btnGrp.$btnPrv.$btnPrf.'</span>';
-	$newbtn = has_privs($smd_um_event.'.usr.create') ? '<a class="navlink" href="?event='.$smd_um_event.a.'step=smd_um_edit">' .smd_um_gTxt('smd_um_new_user'). '</a>' : '';
+	$btnbar = smd_um_buttons('usr');
 
-	// Inject styles
-	echo '<style type="text/css">' . $smd_um_styles['control-panel'] . '</style>';
-
-	echo '<div id="'.$smd_um_event.'_control" class="txp-control-panel">';
+	echo '<h1 class="txp-heading">', gTxt('smd_um_heading_usr'), '</h1>',
+		'<div id="', $smd_um_event, '_control" class="txp-control-panel">',
+		$btnbar;
 
 	if ($total < 1) {
 		if ($criteria != 1) {
-			echo n.smd_um_search_form($crit, $search_method).$btnbar.
-				n.graf(gTxt('no_results_found'), ' class="indicator"').'</div>';
+			echo n, smd_um_search_form($crit, $search_method),
+				n, graf(gTxt('no_results_found'), ' class="indicator"'),
+				n, '</div>';
 		}
 		return;
 	}
@@ -432,68 +500,37 @@ function smd_um($msg='') {
 
 	list($page, $offset, $numPages) = pager($total, $limit, $page);
 
-	echo n.smd_um_search_form($crit, $search_method).$btnbar.'</div>';
+	$use_multi_edit = ( has_privs($smd_um_event.'.usr.edit') && (safe_count('txp_users', '1=1') > 1) );
+
+	echo n, smd_um_search_form($crit, $search_method), '</div>';
 
 	// Retrieve the user info and related counts
 	$rs = safe_query('SELECT '.$fields.$clause.' HAVING '.$criteria.' ORDER BY '.$sort_sql.' LIMIT '.$offset.', '.$limit);
 
 	if ($rs) {
-		echo n.'<div class="txp-list">';
-		echo '<form action="index.php" id="smd_um_form" method="post" name="longform" onsubmit="return verify(\''.gTxt('are_you_sure').'\')">'.
-		startTable('list', '', 'list').
-		n.'<thead>'.
-		tr(tda($newbtn, ' class="noline"')).
-		n.tr(
-			column_head('login_name', 'name', 'smd_um', true, $switch_dir, $crit, $search_method, (('name' == $sort) ? "$dir " : '').'name login-name').
-			column_head('real_name', 'real_name', 'smd_um', true, $switch_dir, $crit, $search_method, (('real_name' == $sort) ? "$dir " : '').'name real-name').
-			column_head('email', 'email', 'smd_um', true, $switch_dir, $crit, $search_method, (('email' == $sort) ? "$dir " : '').'email').
-			column_head('privileges', 'privs', 'smd_um', true, $switch_dir, $crit, $search_method, (('privs' == $sort) ? "$dir " : '').'privs').
-			column_head('last_login', 'last_login', 'smd_um', true, $switch_dir, $crit, $search_method, (('last_login' == $sort) ? "$dir " : '').'date last-login modified').
-			column_head(smd_um_gTxt('smd_um_article_count'), 'article_count', 'smd_um', true, $switch_dir, $crit, $search_method, (('article_count' == $sort) ? "$dir " : '')).
-			column_head(smd_um_gTxt('smd_um_image_count'), 'image_count', 'smd_um', true, $switch_dir, $crit, $search_method, (('image_count' == $sort) ? "$dir " : '')).
-			column_head(smd_um_gTxt('smd_um_file_count'), 'file_count', 'smd_um', true, $switch_dir, $crit, $search_method, (('file_count' == $sort) ? "$dir " : '')).
-			column_head(smd_um_gTxt('smd_um_link_count'), 'link_count', 'smd_um', true, $switch_dir, $crit, $search_method, (('link_count' == $sort) ? "$dir " : '')).
-			hCell('', '', ' class="multi-edit"')
-		).
-		n.'</thead>';
+		echo n, '<div class="txp-container">',
+			n, '<form action="index.php" id="smd_um_form" method="post" name="longform" class="multi_edit_form" onsubmit="return verify(\''.gTxt('are_you_sure').'\')">',
+			n, '<div class="txp-listtables">',
+			n, startTable('', '', 'txp-list'),
+			n, '<thead>',
+			n, tr(
+				n. (($use_multi_edit)
+					? hCell(fInput('checkbox', 'select_all', 0, '', '', '', '', '', 'select_all'), '', ' title="'.gTxt('toggle_all_selected').'" class="multi-edit"')
+					: hCell('', '', ' class="multi-edit"')
+				).
+				n. column_head('login_name', 'name', 'smd_um', true, $switch_dir, $crit, $search_method, (('name' == $sort) ? "$dir " : '').'name login-name').
+				n. column_head('real_name', 'real_name', 'smd_um', true, $switch_dir, $crit, $search_method, (('real_name' == $sort) ? "$dir " : '').'name real-name').
+				n. column_head('email', 'email', 'smd_um', true, $switch_dir, $crit, $search_method, (('email' == $sort) ? "$dir " : '').'email').
+				n. column_head('privileges', 'privs', 'smd_um', true, $switch_dir, $crit, $search_method, (('privs' == $sort) ? "$dir " : '').'privs').
+				n. column_head('last_login', 'last_login', 'smd_um', true, $switch_dir, $crit, $search_method, (('last_login' == $sort) ? "$dir " : '').'date last-login modified').
+				n. column_head(gTxt('smd_um_article_count'), 'article_count', 'smd_um', true, $switch_dir, $crit, $search_method, (('article_count' == $sort) ? "$dir " : '')).
+				n. column_head(gTxt('smd_um_image_count'), 'image_count', 'smd_um', true, $switch_dir, $crit, $search_method, (('image_count' == $sort) ? "$dir " : '')).
+				n. column_head(gTxt('smd_um_file_count'), 'file_count', 'smd_um', true, $switch_dir, $crit, $search_method, (('file_count' == $sort) ? "$dir " : '')).
+				n. column_head(gTxt('smd_um_link_count'), 'link_count', 'smd_um', true, $switch_dir, $crit, $search_method, (('link_count' == $sort) ? "$dir " : ''))
+			),
+			n, '</thead>',
+			n, '<tbody>';
 
-		$assets = safe_column('name', 'txp_users', '1=1');
-		$assign_assets = $assets ? '<label for="assign_assets">'.addslashes(gTxt('assign_assets_to')).sp.'</label><span>'.str_replace(array("\n", '-'), array('', '&#45;'), str_replace('</', '<\/', addslashes(selectInput('assign_assets', $assets, '', true)))).'<\/span>' : '';
-		$permitted_users = smd_um_get_groups(1);
-		$privlist = str_replace(array("\n", '-'), array('', '&#45;'), str_replace('</', '<\/', addslashes(selectInput('privs', $permitted_users, ''))));
-
-		$tfoot = n.'<tfoot>'.tr(
-			tda(
-				((has_privs($smd_um_event.'.usr.edit'))
-					? select_buttons().
-					smd_um_multiedit_form($page, $sort, $dir, $crit, $search_method).'<p id="smd_um_js"></p>'
-					: '')
-			, ' class="multi-edit" colspan="10" style="text-align: right; border: none;"')
-		).n.'</tfoot>';
-
-		echo $tfoot;
-		echo <<<EOJS
-<script type="text/javascript">
-jQuery(function() {
-	jQuery('#withselected').attr('onchange', '').change(function() {
-		switch(jQuery(this).val()) {
-			case "changeprivilege":
-				jQuery('#smd_um_js').empty().append('<span>{$privlist}</span>');
-			break;
-			case "delete":
-				jQuery('#smd_um_js').empty().append('{$assign_assets}');
-			break;
-			default:
-				jQuery('#smd_um_js').empty();
-			break;
-		}
-	});
-});
-</script>
-EOJS;
-		echo '<tbody>';
-
-		$ctr = 1;
 		$curr_priv = safe_field('privs', 'txp_users', "name = '" .doSlash($txp_user). "'");
 
 		while ($row = nextRow($rs)) {
@@ -502,6 +539,7 @@ EOJS;
 			$permitted = smd_um_can_edit($curr_priv, $name, $privs);
 
 			echo tr(
+				td(((has_privs($smd_um_event.'.usr.edit') && $txp_user != $row['name']) ? fInput('checkbox', 'selected[]', $row['name'], 'checkbox') : ''), '', 'multi-edit').
 				td( (($permitted) ? eLink($smd_um_event, 'smd_um_edit', 'user_id', $user_id, $name) : $name), '', 'name login-name actions').
 				td($RealName, '', 'name real-name').
 				td('<a href="mailto:'.$email.'">'.$email.'</a>', '', 'email').
@@ -510,30 +548,33 @@ EOJS;
 				td(($article_count) ? eLink('list', 'list', 'search_method', 'author', $article_count, 'crit', $name) : '0').
 				td(($image_count) ? eLink('image', 'image_list', 'search_method', 'author', $image_count, 'crit', $name) : '0').
 				td(($file_count) ? eLink('file', 'file_list', 'search_method', 'author', $file_count, 'crit', $name) : '0').
-				td(($link_count) ? eLink('link', 'link_edit', 'search_method', 'author', $link_count, 'crit', $name) : '0').
-				td(((has_privs($smd_um_event.'.usr.edit') && $txp_user != $row['name'] && array_key_exists($privs, $permitted_users)) ? fInput('checkbox', 'selected[]', $row['name'], 'checkbox') : ''), '', 'multi-edit')
-			, ' class="'.(($ctr%2 == 0) ? 'even' : 'odd').'"'
+				td(($link_count) ? eLink('link', 'link_edit', 'search_method', 'author', $link_count, 'crit', $name) : '0')
 			);
-
-			$ctr++;
 		}
 
-		echo '</tbody>'.
-		n.endTable().
-		n.tInput().
-		n.'</form>'.
-
-		n.'<div id="users_navigation" class="txp-navigation">'.
-		nav_form('smd_um', $page, $numPages, $sort, $dir, $crit, $search_method, $total, $limit).
-
-		pageby_form('smd_um', $smd_um_list_pageby).
-		n.'</div>'.n.smd_um_active_users().'</div>';
+		echo n, '</tbody>',
+			n, endTable(),
+			n, '</div>',
+			n, (($use_multi_edit) ? smd_um_multiedit_form($page, $sort, $dir, $crit, $search_method) : ''),
+			n, tInput(),
+			n, '</form>',
+			n, '<div id="users_navigation" class="txp-navigation">',
+			n, nav_form('smd_um', $page, $numPages, $sort, $dir, $crit, $search_method, $total, $limit),
+			n, pageby_form('smd_um', $smd_um_list_pageby),
+			n, '</div>',
+			n, smd_um_active_users(),
+			n, '</div>';
 	}
+
+	// Call the Admin side's author_list routine so other plugins with a vested interest can join the party
+	callback_event('admin', 'author_list');
 }
 
 // Can this logged-in user edit the given user account?
 function smd_um_can_edit($curr_priv, $name, $privs) {
-	global $smd_um_event, $smd_um_prefs, $txp_user;
+	global $smd_um_event, $txp_user;
+
+	$smd_um_prefs = smd_um_get_prefs();
 
 	$permitted = false; // Assume no editing rights unlesss otherwise stated
 
@@ -561,7 +602,7 @@ function smd_um_can_edit($curr_priv, $name, $privs) {
 // ------------------------
 // Edit a single User
 function smd_um_edit($msg='') {
-	global $txp_user, $smd_um_event, $smd_um_styles;
+	global $step, $txp_user, $smd_um_event;
 
 	$vars = array('user_id', 'name', 'RealName', 'email', 'privs');
 	extract(gpsa($vars));
@@ -589,70 +630,39 @@ function smd_um_edit($msg='') {
 
 	$caption = gTxt(($user_id) ? 'edit_author' : 'add_new_author');
 
-	pagetop(smd_um_gTxt('smd_um_tab_name').' &raquo; '.smd_um_gTxt('smd_um_usr_lbl'), $msg);
-	extract(smd_um_buttons('usr'));
+	pagetop(gTxt('smd_um_tab_name').' &raquo; '.gTxt('smd_um_usr_lbl'), $msg);
+	$btnbar = smd_um_buttons('usr');
 
-	$btnbar = '<span class="smd_um_buttons">'.$btnUsr.$btnGrp.$btnPrv.$btnPrf.'</span>';
+	echo '<h1 class="txp-heading">', $caption, '</h1>',
+		n, '<div id="', $smd_um_event, '_control" class="txp-control-panel">',
+		n, $btnbar,
+		n, '</div>',
+		n, '<div id="', $smd_um_event.'_container" class="txp-edit">',
+		n, form(
+			'<div class="txp-edit">'.n.
+			inputLabel('login_name', ($user_id ? strong($name) : fInput('text', 'name', $name, '', '', '', INPUT_REGULAR, '', 'login_name')), ($user_id ? '' : 'login_name'), ($user_id ? '' : 'add_new_author')).n.
+			inputLabel('real_name', fInput('text', 'RealName', $RealName, '', '', '', INPUT_REGULAR, '', 'real_name'), 'real_name').n.
+			inputLabel('login_email', fInput('text', 'email', $email, '', '', '', INPUT_REGULAR, '', 'login_email'), 'email').n.
+			inputLabel('privileges', (($txp_user != $name) ? selectInput('privs', smd_um_get_groups(1), $privs) : hInput('privs', $privs).strong(smd_um_get_priv_level($privs))), ($user_id ? '' : 'privileges'), 'about_privileges').n.
+			pluggable_ui('author_ui', 'extend_detail_form', '', $rs).n.
+			graf(fInput('submit', '', gTxt('save'), 'publish')).
+			eInput($smd_um_event).
+			($user_id ? hInput('user_id', $user_id).sInput('smd_um_save') : sInput('smd_um_save_new')).
+			'</div>'
+		, '', '', 'post', 'edit-form', '', 'user_edit'),
+		'</div>';
 
-	// Inject styles
-	echo '<style type="text/css">' . $smd_um_styles['control-panel'] . '</style>';
-
-	echo '<div id="'.$smd_um_event.'_control" class="txp-control-panel">'
-		. '<span class="smd_um_title">'.$caption.'</span>' . $btnbar . '</div>';
-
-	echo '<div id="'.$smd_um_event.'_container" class="txp-edit">';
-	echo form(
-
-		startTable('edit', '', 'edit-pane').
-
-		tr(
-			fLabelCell('login_name', '', 'name').
-			($user_id ? td(strong($name)) : fInputCell('name', $name, '', 30))
-		, ' class="name login-name"')
-
-		.tr(
-			fLabelCell('real_name', '', 'RealName').
-			fInputCell('RealName', $RealName, '', 30)
-		, ' class="name real-name"')
-
-		.tr(
-			fLabelCell('email', '', 'email').
-			fInputCell('email', $email, '', 30)
-		, ' class="email"')
-
-		.tr(
-			fLabelCell('privileges', '', 'privs').
-			td(
-				($txp_user != $name
-					? selectInput('privs', smd_um_get_groups(1), $privs)
-					: hInput('privs', $privs).strong(smd_um_get_priv_level($privs))
-				)
-				.sp.popHelp('about_privileges')
-			)
-		, ' class="privs"')
-
-		.pluggable_ui('author_ui', 'extend_detail_form', '', $rs)
-
-		.tr(
-			td()
-			.td(
-				fInput('submit', '', gTxt('save'), 'publish').($user_id ? '' : sp.popHelp('add_new_author'))
-			)
-		)
-
-		.endTable()
-
-		.eInput($smd_um_event).
-		($user_id ? hInput('user_id', $user_id).sInput('smd_um_save') : sInput('smd_um_save_new'))
-	, '', '', 'post', 'edit-form', '', 'user_edit');
-	echo smd_um_change_pass_form($name, $user_id);
-	echo '</div>';
+	// Call the Admin side's author_edit routine so other plugins with a vested interest can join the party
+	callback_event('admin', 'author_edit');
 }
 
 // ------------------------
 // Virtually cloned from Admin->Users
 function smd_um_save() {
-	global $smd_um_event, $txp_user;
+	global $event, $smd_um_event, $txp_user;
+
+	// Call the Admin side's author_save routine so other plugins can join the party
+	callback_event('admin', 'author_save');
 
 	extract(doSlash(psa(array('privs', 'user_id', 'RealName', 'email'))));
 	$privs   = assert_int($privs);
@@ -685,18 +695,22 @@ function smd_um_save() {
 		$msg = '';
 	}
 
-	$smd_um_event($msg);
+	smd_um_dispatcher($event, '', $msg);
 }
 
 // ------------------------
 // Virtually cloned from Admin->Users
 function smd_um_save_new() {
-	global $smd_um_event, $smd_um_prefs;
+	global $smd_um_event;
 
 	require_privs($smd_um_event.'.usr.create');
 
+	// Call the Admin side's author_save_new routine so other plugins with a vested interest can join the party
+	callback_event('admin', 'author_save_new');
+
 	extract(doSlash(psa(array('privs', 'name', 'email', 'RealName'))));
 
+	$smd_um_prefs = smd_um_get_prefs();
 	$privs  = assert_int($privs);
 	$length = function_exists('mb_strlen') ? mb_strlen($name, '8bit') : strlen($name);
 
@@ -741,7 +755,7 @@ function smd_um_save_new() {
 // ------------------------
 // Group management panel
 function smd_um_groups($msg='') {
-	global $smd_um_event, $txp_user, $smd_um_styles, $txp_groups, $txp_permissions;
+	global $smd_um_event, $txp_user, $txp_groups, $txp_permissions;
 
 	require_privs($smd_um_event.'.grp');
 
@@ -766,7 +780,7 @@ function smd_um_groups($msg='') {
 			smd_um_upsert_lang($title, $name);
 		}
 
-		$msg = smd_um_gTxt('smd_um_grp_saved');
+		$msg = gTxt('smd_um_grp_saved');
 
 	} else if (ps('smd_um_group_add')) {
 		$title = ps('smd_um_new_grp');
@@ -775,7 +789,7 @@ function smd_um_groups($msg='') {
 		if ($name) {
 			$exists = safe_field('id', SMD_UM_GROUPS, "name='".doSlash($name)."'");
 			if ($exists) {
-				$msg = array(smd_um_gTxt('smd_um_grp_exists', array('{id}' => $exists)), E_USER_WARNING);
+				$msg = array(gTxt('smd_um_grp_exists', array('{id}' => $exists)), E_USER_WARNING);
 			} else {
 				// It's not atomic but it'll do, given that:
 				//  a) normally only one person administers this plugin
@@ -797,10 +811,10 @@ function smd_um_groups($msg='') {
 					}
 				}
 
-				$msg = smd_um_gTxt('smd_um_grp_created', array('{name}' => $name));
+				$msg = gTxt('smd_um_grp_created', array('{name}' => $name));
 			}
 		} else {
-			$msg = array(smd_um_gTxt('smd_um_name_required'), E_ERROR);
+			$msg = array(gTxt('smd_um_name_required'), E_ERROR);
 		}
 	} else if (ps('smd_um_group_del')) {
 		$id = str_replace('smd_um_del_', '', ps('smd_um_grp_del'));
@@ -817,39 +831,36 @@ function smd_um_groups($msg='') {
 
 		if ($red) {
 			$ret = safe_delete(SMD_UM_PRIVS, "priv='".doSlash($id)."'");
-			$msg = smd_um_gTxt('smd_um_grp_deleted') . ($affected_users ? smd_um_gTxt('smd_um_grp_affected', array('{num}' => count($affected_users))) : '');
+			$msg = gTxt('smd_um_grp_deleted') . ($affected_users ? gTxt('smd_um_grp_affected', array('{num}' => count($affected_users))) : '');
 		}
 	}
 
 	// Render the page
-	pagetop(smd_um_gTxt('smd_um_tab_name').' &raquo; '.smd_um_gTxt('smd_um_grp_lbl'), $msg);
-	extract(smd_um_buttons('grp'));
-
-	$btnbar = '<span class="smd_um_buttons">'.$btnUsr.$btnGrp.$btnPrv.$btnPrf.'</span>';
+	pagetop(gTxt('smd_um_tab_name').' &raquo; '.gTxt('smd_um_grp_lbl'), $msg);
+	$btnbar = smd_um_buttons('grp');
 	$grouplist = smd_um_get_groups(1);
 	unset($grouplist[0]); // Don't want None privs
-	$grouplist = selectInput('smd_um_new_grp_based_on', $grouplist, '', true);
-
-	// Inject styles
-	echo '<style type="text/css">' . $smd_um_styles['control-panel'] . '</style>';
+	$grouplist = selectInput('smd_um_new_grp_based_on', $grouplist, '', true, '', 'smd_um_new_grp_based_on');
 
 	// New group
-	echo '<div id="'.$smd_um_event.'_control" class="txp-control-panel">'
-		. form(
+	echo '<h1 class="txp-heading">', gTxt('smd_um_heading_grp'), '</h1>',
+		n, '<div id="'.$smd_um_event.'_control" class="txp-control-panel">',
+		n, $btnbar,
+		n, form(
 			graf(
-				'<label for="smd_um_new_grp">' . smd_um_gTxt('smd_um_grp_new') . '</label>'.sp
-				.fInput('text', 'smd_um_new_grp', '', '', '', '', '', '', 'smd_um_new_grp').sp
-				.'<label for="smd_um_new_grp_name">' . smd_um_gTxt('smd_um_grp_new_name') . '</label>'.sp
-				.fInput('text', 'smd_um_new_grp_name', '', '', '', '', '', '', 'smd_um_new_grp_name').sp
-				.'<label for="smd_um_new_grp_based_on">' . smd_um_gTxt('smd_um_based_on') . '</label>'.sp
-				.$grouplist.sp
-				.fInput('submit', 'smd_um_group_add', gTxt('create'), 'smallerbox')
-				.eInput($smd_um_event)
-				.sInput('smd_um_groups')
+				'<label for="smd_um_new_grp">' . gTxt('smd_um_grp_new') . '</label>'
+				.n.fInput('text', 'smd_um_new_grp', '', '', '', '', '', '', 'smd_um_new_grp')
+				.n.'<label for="smd_um_new_grp_name">' . gTxt('smd_um_grp_new_name') . '</label>'
+				.n.fInput('text', 'smd_um_new_grp_name', '', '', '', '', '', '', 'smd_um_new_grp_name')
+				.n.'<label for="smd_um_new_grp_based_on">' . gTxt('smd_um_based_on') . '</label>'
+				.n.$grouplist
+				.n.fInput('submit', 'smd_um_group_add', gTxt('create'))
+				.n.eInput($smd_um_event)
+				.n.sInput('smd_um_groups')
 				)
 			, '','','post','search-form'
-			)
-		. $btnbar . '</div>';
+			),
+		n, '</div>';
 
 	// Retrieve the group info and user counts per privilege level
 	$fields = 'smdg.id, smdg.name, smdg.core, txu.total AS user_count';
@@ -859,40 +870,24 @@ function smd_um_groups($msg='') {
 	$rs = getRows('SELECT ' . $fields.$clause . ' ORDER BY id');
 
 	if ($rs) {
-		echo n.'<div class="txp-list">';
-		echo '<form action="index.php" id="smd_um_grp_form" method="post" name="longform" onsubmit="return verify(\''.gTxt('are_you_sure').'\')">'.
-		startTable('list', '', 'list').
-		n.'<thead>'.
-		n.tr(
-			hCell('ID', '', ' class="id"').
-			hCell('name', '', ' class="name"').
-			hCell('title', '', ' class="name"').
-			hCell('', '', '')
-		).
-		n.'</thead>';
-
-		$tfoot = n.'<tfoot>'
-			.tr(
-				tda('&nbsp;', ' class="noline"')
-				. tda('&nbsp;', ' class="noline"')
-				. tda(fInput('submit', 'smd_um_group_save', gTxt('save'), 'publish'), ' class="noline"')
-			).'</tfoot>';
-		echo $tfoot;
-		echo <<<EOJS
-<script type="text/javascript">
-function smd_um_presub(obj) {
-	jQuery('#smd_um_grp_del').val(jQuery(obj).attr('id'));
-}
-</script>
-EOJS;
-
-		echo '<tbody>';
-		$ctr = 1;
+		echo n, '<div class="plugin-column">',
+			n, '<form action="index.php" id="smd_um_grp_form" method="post" name="longform" onsubmit="return verify(\''.gTxt('are_you_sure').'\')">',
+			n.'<div class="txp-listtables">'.
+			n, startTable('', '', 'txp-list'),
+			n, '<thead>',
+			n, tr(
+				hCell('ID', '', ' class="id"').
+				hCell('name', '', ' class="name"').
+				hCell('title', '', ' class="name"').
+				hCell('', '', '')
+			),
+			n, '</thead>',
+			n, '<tbody>';
 
 		foreach ($rs as $row) {
 			extract(doSpecial($row));
 			$user_count = empty($user_count) ? 0 : $user_count;
-			$dLink = ($core) ? '&nbsp;' : fInput('submit', 'smd_um_group_del', "×", 'smallerbox', '', 'smd_um_presub(this)', '', '', 'smd_um_del_'.$id)
+			$dLink = ($core) ? '&nbsp;' : fInput('submit', 'smd_um_group_del', "×", '', '', 'smd_um_presub(this)', '', '', 'smd_um_del_'.$id)
 				.eInput($smd_um_event)
 				.sInput('smd_um_groups')
 				.tInput();
@@ -901,32 +896,38 @@ EOJS;
 					hInput('smd_um_group_id[]', $id)
 					.(($user_count) ? eLink($smd_um_event, '', 'search_method', 'privileges', $id, 'crit', $id) : $id)
 				, ' class="id"'
-					.(($user_count) ? ' title="' . smd_um_gTxt('smd_um_user_count') . $user_count . '"': '')
+					.(($user_count) ? ' title="' . gTxt('smd_um_user_count') . $user_count . '"': '')
 				)
 				.td(fInput('text', 'smd_um_group_name[]', $name), '', 'name')
 				.td(fInput('text', 'smd_um_group_title[]', gTxt($name)), '', 'name')
 				.td($dLink)
-			, ' class="'.(($ctr%2 == 0) ? 'even' : 'odd').'"'
 			);
-
-			$ctr++;
 		}
 
-		echo fInput('hidden', 'smd_um_grp_del', '', '', '', '', '', '', 'smd_um_grp_del') , '</tbody>'.
-			n.endTable().
-			n.eInput($smd_um_event).
-			n.sInput('smd_um_groups').
-			n.tInput().
-			n.'</form>'.
-			n.smd_um_active_users().
-			n.'</div>';
+		echo n, '</tbody>',
+			n, endTable(),
+			n, '</div>',
+			n, graf(fInput('submit', 'smd_um_group_save', gTxt('save'), 'publish')),
+			n, fInput('hidden', 'smd_um_grp_del', '', '', '', '', '', '', 'smd_um_grp_del'),
+			n, eInput($smd_um_event),
+			n, sInput('smd_um_groups'),
+			n, tInput(),
+			n, '</form>',
+			n, smd_um_active_users(),
+			n, '</div>',
+			script_js(<<<EOJS
+function smd_um_presub(obj) {
+	jQuery('#smd_um_grp_del').val(jQuery(obj).attr('id'));
+}
+EOJS
+			);
 	}
 }
 
 // ------------------------
 // Privs management panel
 function smd_um_privs($msg='') {
-	global $smd_um_event, $smd_um_prefs, $smd_um_styles, $txp_user, $txp_permissions;
+	global $smd_um_event, $txp_user, $txp_permissions;
 
 	require_privs($smd_um_event.'.prv');
 
@@ -960,7 +961,7 @@ function smd_um_privs($msg='') {
 
 		// Merge the changes into the priv table
 		smd_um_priv_merge(0,1);
-		$msg = smd_um_gTxt('smd_um_prv_saved');
+		$msg = gTxt('smd_um_prv_saved');
 	} else if (ps('smd_um_priv_add')) {
 		$name = ps('smd_um_new_prv');
 		$name = strtolower(sanitizeForPage($name));
@@ -968,43 +969,40 @@ function smd_um_privs($msg='') {
 		if ($name) {
 			if (strpos($name, 'smd_um') === 0) {
 				// Can't create privs for this plugin
-				$msg = array(smd_um_gTxt('smd_um_prv_smd_um'), E_USER_WARNING);
+				$msg = array(gTxt('smd_um_prv_smd_um'), E_USER_WARNING);
 			} else {
 				$exists = array_key_exists($name, $txp_permissions);
 				if ($exists) {
-					$msg = array(smd_um_gTxt('smd_um_prv_exists'), E_USER_WARNING);
+					$msg = array(gTxt('smd_um_prv_exists'), E_USER_WARNING);
 				} else {
 					safe_insert(SMD_UM_PRIVS, "area='" . doSlash($name) . "'");
 
 					smd_um_priv_merge(0,1);
-					$msg = smd_um_gTxt('smd_um_prv_created', array('{area}' => $name));
+					$msg = gTxt('smd_um_prv_created', array('{area}' => $name));
 				}
 			}
 		} else {
-			$msg = array(smd_um_gTxt('smd_um_name_required'), E_ERROR);
+			$msg = array(gTxt('smd_um_name_required'), E_ERROR);
 		}
 	}
 
-	pagetop(smd_um_gTxt('smd_um_tab_name').' &raquo; '.smd_um_gTxt('smd_um_prv_lbl'), $msg);
-	extract(smd_um_buttons('prv'));
+	pagetop(gTxt('smd_um_tab_name').' &raquo; '.gTxt('smd_um_prv_lbl'), $msg);
+	$btnbar = smd_um_buttons('prv');
 
-	$btnbar = '<span class="smd_um_buttons">'.$btnUsr.$btnGrp.$btnPrv.$btnPrf.'</span>';
-
-	// Inject styles
-	echo '<style type="text/css">' . $smd_um_styles['control-panel'] . '</style>';
-
-	echo '<div id="'.$smd_um_event.'_control" class="txp-control-panel">'
-		. form(
+	echo '<h1 class="txp-heading">', gTxt('smd_um_heading_prv'), '</h1>',
+		n, '<div id="'.$smd_um_event.'_control" class="txp-control-panel">',
+		n, $btnbar,
+		n, form(
 			graf(
-				'<label for="smd_um_new_prv">' . smd_um_gTxt('smd_um_prv_new') . '</label>'.sp
-				.fInput('text', 'smd_um_new_prv', '', '', '', '', '', '', 'smd_um_new_prv')
-				.fInput('submit', 'smd_um_priv_add', gTxt('create'), 'smallerbox')
-				.eInput($smd_um_event)
-				.sInput('smd_um_privs')
+				'<label for="smd_um_new_prv">' . gTxt('smd_um_prv_new') . '</label>'
+				.n.fInput('text', 'smd_um_new_prv', '', '', '', '', '', '', 'smd_um_new_prv')
+				.n.fInput('submit', 'smd_um_priv_add', gTxt('create'))
+				.n.eInput($smd_um_event)
+				.n.sInput('smd_um_privs')
 				)
 			, '','','post','search-form'
-			)
-		. $btnbar . '</div>';
+			),
+		n, '</div>';
 
 	$grouplist_name = smd_um_get_groups(0);
 	$grouplist_title = smd_um_get_groups(1);
@@ -1014,18 +1012,16 @@ function smd_um_privs($msg='') {
 
 	$curr_area = '';
 	$area_count = 0;
-	$thatts = ' class="smd_um_grp_name" title="' . smd_um_gTxt('smd_um_sel_grp') . '"';
+	$thatts = ' class="smd_um_grp_name" title="' . gTxt('smd_um_sel_grp') . '"';
 	$headers = '<thead>'.tr(
-		hCell('', '', ' class="smd_um_sel_area" title="' . smd_um_gTxt('smd_um_sel_all') . '"')
-		.hCell(smd_um_gTxt('smd_um_reset'), '', ' class="smd_um_reset_col" title="' . smd_um_gTxt('smd_um_sel_reset') . '"')
+		hCell('', '', ' class="smd_um_sel_area" title="' . gTxt('smd_um_sel_all') . '"')
+		.hCell(gTxt('smd_um_reset'), '', ' class="smd_um_reset_col" title="' . gTxt('smd_um_sel_reset') . '"')
 		.hCell(join('</th><th'.$thatts.'>', $grouplist_title), '', $thatts)
 	, ' class="smd_um_prv_hdr"'). '</thead>';
 
 	$viz = do_list(get_pref('pane_smd_um_priv_visible'));
 
-	$ctr = 1;
-	echo <<<EOJS
-<script type="text/javascript">
+	echo script_js(<<<EOJS
 function smd_um_presub(obj) {
 	jQuery('#smd_um_prv_del').val(jQuery(obj).attr('id'));
 }
@@ -1050,7 +1046,7 @@ function smd_um_toggleCheckbox(ev) {
 			// (d)eselect all selected rows/cols
 			jQuery('.smd_um_selected, .smd_um_rsel, .smd_um_csel').removeClass('smd_um_selected smd_um_rsel smd_um_csel');
 		break;
-		
+
 		case 84:
 			// (t)oggle selected boxes
 			obj.each(function() {
@@ -1120,12 +1116,13 @@ jQuery(function() {
 	});
 
 });
-</script>
-EOJS;
+EOJS
+	);
 
-	echo n.'<div class="txp-list">';
-	echo '<form action="index.php" id="smd_um_privilege_form" method="post" name="longform" onsubmit="return verify(\''.gTxt('are_you_sure').'\')">';
-	echo eInput($smd_um_event).sInput('smd_um_privs').tInput();
+	echo n, '<div class="txp-list">',
+		n, '<form action="index.php" id="smd_um_privilege_form" method="post" name="longform" onsubmit="return verify(\''.gTxt('are_you_sure').'\')">',
+		n, eInput($smd_um_event).sInput('smd_um_privs').tInput();
+
 	foreach ($txp_permissions as $area => $privs) {
 		$priv_list = do_list($privs);
 		$area_parts = do_list($area, '.');
@@ -1141,12 +1138,12 @@ EOJS;
 			$area_head = gTxt($area_parts[0]);
 			$is_viz = in_array($area_parts[0], $viz);
 			$ref = 'smd_um_priv_'.$area_parts[0];
-			echo '<div class="smd_um_privgroup"><h2 class="plain lever'.($is_viz ? ' expanded' : '').'"><a href="#'.$ref.'">' . $area_parts[0] . (($area_parts[0] != $area_head) ? ' (' . gTxt($area_parts[0]).')' : '') . '</a></h2>';
-			echo '<div id="'.$ref.'" class="toggle" style="display:'.($is_viz ? 'block' : 'none').'">';
-			echo fInput('submit', 'smd_um_priv_save', gTxt('save'), 'smallerbox smd_um_privsave');
-			echo startTable('list');
-			echo $headers;
-			echo '<tbody>';
+			echo n, '<div class="smd_um_privgroup"><h3 class="txp-summary lever', ($is_viz ? ' expanded' : ''), '"><a href="#', $ref, '">', $area_parts[0], (($area_parts[0] != $area_head) ? ' ('. gTxt($area_parts[0]). ')' : ''), '</a></h3>',
+				n, '<div id="', $ref, '" class="toggle" style="display:', ($is_viz ? 'block' : 'none'), '">',
+				n, fInput('submit', 'smd_um_priv_save', gTxt('save'), 'smd_um_privsave'),
+				n, startTable('', '', 'txp-list'),
+				n, $headers,
+				n, '<tbody>';
 		}
 
 		$privboxes = array();
@@ -1157,23 +1154,31 @@ EOJS;
 		}
 
 		echo tr(
-			tda($area.hInput('smd_um_areas[]', $area), ' class="smd_um_prv_name" title="' . smd_um_gTxt('smd_um_sel_prv') . '"')
+			tda($area.hInput('smd_um_areas[]', $area), ' class="smd_um_prv_name" title="' . gTxt('smd_um_sel_prv') . '"')
 			.td(checkbox($safe_area, 'smd_um_reset', 0), '', 'smd_um_resetbox')
 			.join(n, $privboxes)
-			, ' class="'.(($ctr%2 == 0) ? 'even' : 'odd').'"'
 		);
 		$curr_area = $area_parts[0];
 		$area_count++;
-		$ctr++;
 	}
 
-	echo endTable() .'</div></div>' . fInput('hidden', 'smd_um_prv_del', '', '', '', '', '', '', 'smd_um_prv_del') . '</form>'.smd_um_active_users().'</div>';
+	echo n, endTable(),
+		n, '</div></div>',
+		n, fInput('hidden', 'smd_um_prv_del', '', '', '', '', '', '', 'smd_um_prv_del'),
+		n, '</form>',
+		n, smd_um_active_users(),
+		n, '</div>';
+}
+
+// -------------------------------------------------------------
+function smd_um_wrap_widget($widget) {
+	return '<span class="edit-value">'.$widget.'</span>';
 }
 
 // ------------------------
 // Prefs management panel
 function smd_um_prefs($msg='') {
-	global $smd_um_event, $smd_um_prefs, $smd_um_styles, $txp_user;
+	global $smd_um_event, $txp_user;
 
 	require_privs($smd_um_event.'.prf');
 
@@ -1181,61 +1186,76 @@ function smd_um_prefs($msg='') {
 		smd_um_table_install(0);
 	}
 
+	$smd_um_prefs = smd_um_get_prefs();
+
 	if (ps('smd_um_pref_save')) {
 		foreach ($smd_um_prefs as $idx => $prefobj) {
 			$val = ps($idx);
 			$val = (is_array($val)) ? join(', ', $val) : $val;
-			set_pref($idx, $val, $smd_um_event, $prefobj['type'], $prefobj['html'], $prefobj['position']);
+			set_pref($idx, doSlash($val), $smd_um_event, $prefobj['type'], $prefobj['html'], $prefobj['position']);
 		}
 
-		$msg = smd_um_gTxt('smd_um_prf_saved');
+		$msg = gTxt('preferences_saved');
 	}
 
-	pagetop(smd_um_gTxt('smd_um_tab_name').' &raquo; '.smd_um_gTxt('smd_um_prf_lbl'), $msg);
-	extract(smd_um_buttons('prf'));
+	pagetop(gTxt('smd_um_tab_name').' &raquo; '.gTxt('smd_um_prf_lbl'), $msg);
+	$btnbar = smd_um_buttons('prf');
 
-	$btnbar = '<span class="smd_um_buttons">'.$btnUsr.$btnGrp.$btnPrv.$btnPrf.'</span>';
-
-	// Inject styles
-	echo '<style type="text/css">' . $smd_um_styles['control-panel'] . '</style>';
-
-	echo '<div id="'.$smd_um_event.'_control" class="txp-control-panel">' . $btnbar . '</div>';
+	echo '<h1 class="txp-heading">', gTxt('smd_um_heading_prf'), '</h1>',
+		n, '<div id="', $smd_um_event, '_control" class="txp-control-panel">', $btnbar, '</div>';
 
 	$out = array();
-	$out[] = n.'<div class="txp-list">';
+	$out[] = n.'<div class="plugin-column">';
 	$out[] = '<form name="smd_um_prefs" id="smd_um_prefs" action="index.php" method="post">';
 	$out[] = eInput($smd_um_event).sInput('smd_um_prefs');
-	$out[] = startTable('list');
-	$out[] = tr(tdcs(strong(smd_um_gTxt('smd_um_prf_legend')), 2));
+
+	$last_grp = '';
 	foreach ($smd_um_prefs as $idx => $prefobj) {
+		if ($last_grp != $prefobj['group']) {
+			$out[] = hed(gTxt($prefobj['group']), 2);
+		}
+		$last_grp = $prefobj['group'];
 		$subout = array();
-		$subout[] = tda('<label for="'.$idx.'">'.smd_um_gTxt($idx).'</label>', ' class="noline" style="text-align: right; vertical-align: middle;"');
+		$label = '<span class="edit-label">'
+				.'<label>'.gTxt($idx).'</label>'
+				.'</span>';
 		$val = get_pref($idx, $prefobj['default'], 1);
+		$vis = (isset($prefobj['visible']) && !$prefobj['visible']) ? 'empty' : '';
 		switch ($prefobj['html']) {
 			case 'text_input':
-				$subout[] = fInputCell($idx, $val, '', '', '', $idx);
+				$subout[] = smd_um_wrap_widget(fInput('text', $idx, $val, '', '', '', INPUT_REGULAR, '', $idx));
+			break;
+			case 'textarea':
+				$subout[] = text_area($idx, '', '', $val, $idx);
 			break;
 			case 'yesnoradio':
-				$subout[] = tda(yesnoRadio($idx, $val),' class="noline"');
+				$subout[] = smd_um_wrap_widget(yesnoRadio($idx, $val));
+			break;
+			case 'radioset':
+				$subout[] = smd_um_wrap_widget(radioSet($prefobj['content'], $idx, $val));
 			break;
 			case 'checkboxset':
 				$vals = do_list($val);
 				$lclout = array();
 				foreach ($prefobj['content'] as $cb => $val) {
 					$checked = in_array($cb, $vals);
-					$lclout[] = checkbox($idx.'[]', $cb, $checked). $val;
+					$lclout[] = checkbox($idx.'[]', $cb, $checked). '<label>' . gTxt($val) . '</label>';
 				}
-				$subout[] = tda(join(n, $lclout),' class="noline"');
+				$subout[] = smd_um_wrap_widget(join(n, $lclout));
 			break;
 			case 'selectlist':
-				$subout[] = tda(selectInput($idx, $prefobj['content'][0], $val, $prefobj['content'][1]),' class="noline"');
+				$subout[] = smd_um_wrap_widget(selectInput($idx, $prefobj['content'][0], $val, $prefobj['content'][1]));
+			break;
+			default:
+				if ( strpos($prefobj['html'], 'smd_um_') !== false && is_callable($prefobj['html']) ) {
+					$subout[] = smd_um_wrap_widget($prefobj['html']($idx, $val));
+				}
 			break;
 		}
-		$out[] = tr(join(n ,$subout));
+		$out[] = graf($label . n.join(n ,$subout), ($vis ? ' class="'.$vis.'"' : ''));
 	}
-
-	$out[] = tr(tda('&nbsp;', ' class="noline"') . tda(fInput('submit', 'smd_um_pref_save', gTxt('save'), 'publish'), ' class="noline"'));
-	$out[] = endTable().tInput();
+	$out[] = graf(fInput('submit', 'smd_um_pref_save', gTxt('save'), 'publish'));
+	$out[] = tInput();
 	$out[] = '</form>'.smd_um_active_users().'</div>';
 
 	echo join(n, $out);
@@ -1244,20 +1264,29 @@ function smd_um_prefs($msg='') {
 // ------------------------
 // Common buttons for the interface
 function smd_um_buttons($curr='usr') {
-	global $smd_um_event;
+	global $step, $smd_um_event;
 
 	$grp = has_privs($smd_um_event.'.grp');
 	$prf = has_privs($smd_um_event.'.prf');
 	$prv = has_privs($smd_um_event.'.prv');
+	$new = has_privs($smd_um_event.'.usr.create');
 	$usr = ($grp || $prf || $prv); // Don't show usr button if it's the only tab available
 
-	$ret = array (
-		'btnGrp'      => ( ($grp) ? '<form method="post" action="?event='.$smd_um_event.a.'step=smd_um_groups" style="display:inline">'.fInput('submit', 'submit', smd_um_gTxt('smd_um_grp_lbl'), 'smallerbox'.($curr=='grp'?' smd_active':'')).tInput().'</form>' : ''),
-		'btnPrf'      => ( ($prf) ? '<form method="post" action="?event='.$smd_um_event.a.'step=smd_um_prefs" style="display:inline">'.fInput('submit', 'submit', smd_um_gTxt('smd_um_prf_lbl'), 'smallerbox'.($curr=='prf'?' smd_active':'')).tInput().'</form>' : ''),
-		'btnPrv'      => ( ($prv) ? '<form method="post" action="?event='.$smd_um_event.a.'step=smd_um_privs" style="display:inline">'.fInput('submit', 'submit', smd_um_gTxt('smd_um_prv_lbl'), 'smallerbox'.($curr=='prv'?' smd_active':'')).tInput().'</form>' : ''),
-		'btnUsr'      => ( ($usr) ? '<form method="post" action="?event='.$smd_um_event.a.'step=smd_um" style="display:inline">'.fInput('submit', 'submit', smd_um_gTxt('smd_um_usr_lbl'), 'smallerbox'.($curr=='usr'?' smd_active':'')).tInput().'</form>' : ''),
+	$btns = array (
+		'new' => ( ($new) ? sLink($smd_um_event, 'smd_um_edit', gTxt('smd_um_new_user'), 'navlink') : ''),
+		'grp' => ( ($grp) ? sLink($smd_um_event, 'smd_um_groups', gTxt('smd_um_grp_lbl'), 'navlink') : ''),
+		'prf' => ( ($prf) ? sLink($smd_um_event, 'smd_um_prefs', gTxt('smd_um_prf_lbl'), 'navlink') : ''),
+		'prv' => ( ($prv) ? sLink($smd_um_event, 'smd_um_privs', gTxt('smd_um_prv_lbl'), 'navlink') : ''),
+		'usr' => ( ($usr) ? sLink($smd_um_event, 'smd_um_list', gTxt('smd_um_usr_lbl'), 'navlink') : ''),
+		'chp' => ( sLink($smd_um_event, 'smd_um_change_pass_form', gTxt('change_password'), 'navlink')),
 	);
-	return $ret;
+
+	return graf(
+			(($curr == 'usr') ? n. ($step === 'smd_um_edit' ? '' : $btns['chp']) .n. $btns['new'] .n. strong($btns['usr']) : n.$btns['usr'])
+			.n.(($curr == 'grp') ? strong($btns['grp']) : $btns['grp'])
+			.n.(($curr == 'prv') ? strong($btns['prv']) : $btns['prv'])
+			.n.(($curr == 'prf') ? strong($btns['prf']) : $btns['prf'])
+		, ' class="txp-buttons"');
 }
 
 // ------------------------
@@ -1278,10 +1307,10 @@ function smd_um_search_form($crit, $method) {
 		'real_name'     => gTxt('real_name'),
 		'email'         => gTxt('email'),
 		'privileges'    => gTxt('privileges'),
-		'article_count' => smd_um_gTxt('smd_um_article_count'),
-		'image_count'   => smd_um_gTxt('smd_um_image_count'),
-		'file_count'    => smd_um_gTxt('smd_um_file_count'),
-		'link_count'    => smd_um_gTxt('smd_um_link_count'),
+		'article_count' => gTxt('smd_um_article_count'),
+		'image_count'   => gTxt('smd_um_image_count'),
+		'file_count'    => gTxt('smd_um_file_count'),
+		'link_count'    => gTxt('smd_um_link_count'),
 	);
 
 	return search_form($smd_um_event, '', $crit, $methods, $method, 'login');
@@ -1296,7 +1325,9 @@ function smd_um_get_priv_level($priv) {
 // ------------------------
 // Merge/edit the groups & privs into the existing global arrays
 function smd_um_priv_merge($do_grp=1, $do_priv=1) {
-	global $txp_groups, $smd_um_prefs, $txp_permissions;
+	global $txp_groups, $txp_permissions;
+
+	$smd_um_prefs = smd_um_get_prefs();
 
 	if ($do_grp && smd_um_table_exist(SMD_UM_GROUPS)) {
 		$new_groups = safe_rows('id, name', SMD_UM_GROUPS, '1=1');
@@ -1322,7 +1353,9 @@ function smd_um_priv_merge($do_grp=1, $do_priv=1) {
 // ------------------------
 // Show who's currently online
 function smd_um_active_users() {
-	global $smd_um_event, $smd_um_prefs;
+	global $smd_um_event;
+
+	$smd_um_prefs = smd_um_get_prefs();
 
 	$curr_users = unserialize(get_pref('smd_um_current_users', '', 1));
 	$timeout = get_pref('smd_um_active_timeout', $smd_um_prefs['smd_um_active_timeout']['default']);
@@ -1336,7 +1369,7 @@ function smd_um_active_users() {
 		}
 	}
 
-	return ($online) ? '<div class="smd_um_active_users">' . smd_um_gTxt('smd_um_active') . join(', ', $online) . '</div>' : '';
+	return ($online) ? '<div class="smd_um_active_users">' . gTxt('smd_um_active') . join(', ', $online) . '</div>' : '';
 }
 
 // ------------------------
@@ -1362,12 +1395,14 @@ function smd_um_upsert_lang($title, $name='') {
 
 // ------------------------
 function smd_um_get_groups($type=0) {
-	global $txp_groups, $txp_user, $smd_um_prefs;
+	global $txp_groups, $txp_user;
 	static $permitted_users = array();
 
 	if (isset($permitted_users[$type])) {
 		return $permitted_users[$type];
 	}
+
+	$smd_um_prefs = smd_um_get_prefs();
 
 	$levels = ($type) ? get_groups() : $txp_groups;
 	$tiered = get_pref('smd_um_hierarchical_groups', $smd_um_prefs['smd_um_hierarchical_groups']['default']);
@@ -1403,23 +1438,32 @@ function smd_um_get_groups($type=0) {
 
 // ------------------------
 function smd_um_multiedit_form($page, $sort, $dir, $crit, $search_method) {
+
+	$levels = smd_um_get_groups(1);
+	$privileges = selectInput('privs', $levels, '', '', '', 'privileges');
+
+	$rs = safe_column('name', 'txp_users', '1=1');
+	$assign_assets = $rs ? '<label for="assign_assets">'.gTxt('assign_assets_to').'</label>'.n.selectInput('assign_assets', $rs, '', true, '', 'assign_assets') : '';
+
 	$methods = array(
-		'changeprivilege' => gTxt('changeprivilege'),
-		'resetpassword' => gTxt('resetpassword'),
-		'delete' => gTxt('delete')
+		'changeprivilege' => array('label' => gTxt('changeprivilege'), 'html' => $privileges),
+		'resetpassword'   => gTxt('resetpassword'),
+		'delete'          => array('label' => gTxt('delete'), 'html' => $assign_assets),
 	);
 
 	if (safe_count('txp_users', '1=1') <= 1) unset($methods['delete']);
 
-	return event_multiedit_form('smd_um', $methods, $page, $sort, $dir, $crit, $search_method);
+	return multi_edit($methods, 'smd_um', 'smd_um_multi_edit', $page, $sort, $dir, $crit, $search_method);
 }
 
 // ------------------------
 // Cloned and tweaked from Admin tab :-(
 function smd_um_multi_edit() {
-	global $smd_um_event, $smd_um_prefs, $txp_user;
+	global $smd_um_event, $txp_user;
 
 	require_privs($smd_um_event.'.usr.edit');
+
+	$smd_um_prefs = smd_um_get_prefs();
 
 	$selected = ps('selected');
 	$method   = ps('edit_method');
@@ -1459,6 +1503,7 @@ function smd_um_multi_edit() {
 				foreach ($reassign as $table => $col) {
 					safe_update($table, "$col='$assign_assets'", "$col IN ('$names')");
 				}
+				callback_event('authors_deleted', '', 0, $changed);
 				$msg = 'author_deleted';
 			}
 			break;
@@ -1489,7 +1534,7 @@ function smd_um_multi_edit() {
 						$changed[] = $name;
 						$msg = 'author_updated';
 					} else {
-						$msg = (array(gTxt('could_not_mail').' '.htmlspecialchars($name), E_ERROR));
+						$msg = (array(gTxt('could_not_mail').' '.txpspecialchars($name), E_ERROR));
 					}
 				}
 			}
@@ -1497,7 +1542,7 @@ function smd_um_multi_edit() {
 	}
 
 	if ($changed) {
-		return $smd_um_event(gTxt($msg, array('{name}' => htmlspecialchars(join(', ', $changed)))));
+		return $smd_um_event(gTxt($msg, array('{name}' => txpspecialchars(join(', ', $changed)))));
 	}
 
 	$smd_um_event($msg);
@@ -1505,47 +1550,47 @@ function smd_um_multi_edit() {
 
 // ------------------------
 // Mostly cloned from Admin->Users tab
-function smd_um_change_pass_form($user_name, $user_id) {
+function smd_um_change_pass_form() {
 	global $smd_um_event;
-	return '<div style="margin: 3em auto auto auto; text-align: center;">'.
-	form(
-		tag(gTxt('change_password'), 'h3').
 
-		graf('<label for="new_pass">'.gTxt('new_password').'</label> '.
-			fInput('password', 'new_pass', '', 'edit', '', '', '20', '1', 'new_pass').
-			checkbox('mail_password', '1', true, '', 'mail_password').'<label for="mail_password">'.gTxt('mail_it').'</label> '.
-			hInput('user_name', $user_name).
-			hInput('user_id', $user_id).
-			fInput('submit', 'change_pass', gTxt('submit'), 'smallerbox').
-			eInput($smd_um_event).
-			sInput('smd_um_change_pass')
-		,' style="text-align: center;"')
-	, '', '', 'post', '', '', 'change_password').'</div>';
+	pagetop(gTxt('smd_um_tab_name').' &raquo; '.gTxt('smd_um_chp_lbl'), '');
+
+	echo form(
+		'<div class="txp-edit">'.
+		hed(gTxt('change_password'), 2).n.
+		inputLabel('new_pass', fInput('password', 'new_pass', '', '', '', '', INPUT_REGULAR, '', 'new_pass'), 'new_password').n.
+		graf(checkbox('mail_password', '1', true, '', 'mail_password') .n. '<label for="mail_password">'.gTxt('mail_it').'</label>', ' class="edit-mail-password"').n.
+		graf(fInput('submit', 'change_pass', gTxt('submit'), 'publish')).
+		eInput($smd_um_event).
+		sInput('smd_um_change_pass').
+		'</div>'
+	, '', '', 'post', '', '', 'change_password');
 }
 
 // ------------------------
 // Mostly cloned from Admin->Users tab
 function smd_um_change_pass() {
-	global $txp_user;
+	global $event, $step, $txp_user;
 
-	extract(psa(array('new_pass', 'mail_password', 'user_name', 'user_id')));
+	// Call the Admin side's change_pass routine so other plugins with a vested interest can join the party
+	callback_event('admin', 'change_pass');
+
+	extract(psa(array('new_pass', 'mail_password')));
 
 	if (empty($new_pass)) {
-		smd_um_edit(array(gTxt('password_required'), E_ERROR));
+		smd_um_dispatcher($event, '', array(gTxt('password_required'), E_ERROR));
 		return;
 	}
 
-	if (empty($user_name)) $user_name = $txp_user;
 	$hash = doSlash(txp_hash_password($new_pass));
-	$user_id = assert_int($user_id);
-	$rs = safe_update('txp_users', "pass = '$hash'", "user_id = $user_id");
+	$rs = safe_update('txp_users', "pass = '$hash'", "name = '".doSlash($txp_user)."'");
 
 	if ($rs) {
 		$msg = gTxt('password_changed');
 
 		if ($mail_password) {
-			$email = fetch('email', 'txp_users', 'user_id', $user_id);
-			send_new_password($new_pass, $email, $user_name);
+			$email = fetch('email', 'txp_users', 'name', $txp_user);
+			send_new_password($new_pass, $email, $txp_user);
 			$msg .= sp.gTxt('and_mailed_to').sp.$email;
 		} else {
 			echo comment(mysql_error());
@@ -1555,7 +1600,7 @@ function smd_um_change_pass() {
 	} else {
 		$msg = array(gTxt('smd_um_pass_change_error'), E_ERROR);
 	}
-	smd_um_edit($msg);
+	smd_um_dispatcher($event, '', $msg);
 }
 
 // ------------------------
@@ -1646,12 +1691,12 @@ function smd_um_table_install($showpane='1') {
 	// Spit out results
 	if ($GLOBALS['txp_err_count'] == 0) {
 		if ($showpane) {
-			$msg = smd_um_gTxt('smd_um_tbl_installed');
+			$msg = gTxt('smd_um_tbl_installed');
 			$smd_um_event($msg);
 		}
 	} else {
 		if ($showpane) {
-			$msg = smd_um_gTxt('smd_um_tbl_not_installed');
+			$msg = gTxt('smd_um_tbl_not_installed');
 			$smd_um_event($msg);
 		}
 	}
@@ -1681,9 +1726,9 @@ function smd_um_table_remove() {
 		}
 	}
 	if ($GLOBALS['txp_err_count'] == 0) {
-		$msg = smd_um_gTxt('smd_um_tbl_removed');
+		$msg = gTxt('smd_um_tbl_removed');
 	} else {
-		$msg = smd_um_gTxt('smd_um_tbl_not_removed');
+		$msg = gTxt('smd_um_tbl_not_removed');
 		$smd_um_event($msg);
 	}
 }
@@ -1725,7 +1770,6 @@ function smd_um_table_exist($which='') {
 // Though we could load all $txp_permissions / $txp_groups to the public side for speed,
 // exposing permissions to the world is not such a hot idea. Therefore the privs are
 // fetched ad-hoc and cached
-//TODO: < >  group value
 function smd_um_has_privs($atts, $thing=NULL) {
 	global $txp_user;
 	static $smd_um_permissions;
@@ -1790,7 +1834,7 @@ function smd_um_has_privs($atts, $thing=NULL) {
 					$prv = safe_field('GROUP_CONCAT(priv) AS privs', SMD_UM_PRIVS, "area = '" . doSlash($place) . "'");
 					$smd_um_permissions[$place] = $prv;
 				}
-				$isarea = (in_array($smd_ili['privs'], do_list($smd_um_permissions[$place])));
+				$isarea = ( $isarea || (in_array($smd_ili['privs'], do_list($smd_um_permissions[$place]))) );
 			}
 		}
 
@@ -1837,308 +1881,254 @@ function smd_um_has_privs($atts, $thing=NULL) {
 }
 
 // ------------------------
-function smd_um_gTxt($what, $atts = array()) {
-	$lang = array(
-		'en-gb' => array(
-			'smd_um_active' => 'Users currently active: ',
-			'smd_um_active_timeout' => 'Activity timeout (seconds)',
-			'smd_um_admin_group' => 'Protected administrator group: ',
-			'smd_um_article_count' => 'Articles',
-			'smd_um_assign_to_group' => 'Assign to group',
-			'smd_um_based_on' => 'based on',
-			'smd_um_image_count' => 'Images',
-			'smd_um_file_count' => 'Files',
-			'smd_um_link_count' => 'Links',
-			'smd_um_tab_name' => 'User manager',
-			'smd_um_grp_affected' => '. Users affected: {num}',
-			'smd_um_grp_created' => 'Group "{name}" created',
-			'smd_um_grp_deleted' => 'Group deleted',
-			'smd_um_grp_exists' => 'Group already exists as priv ID {id}',
-			'smd_um_grp_lbl' => 'Groups',
-			'smd_um_grp_new' => 'New group title',
-			'smd_um_grp_new_name' => 'name',
-			'smd_um_grp_saved' => 'Group info updated',
-			'smd_um_hierarchical_groups' => 'Assume hierarchical groups (levels)',
-			'smd_um_max_search_limit' => 'Maximum user search result limit',
-			'smd_um_name_required' => 'A name is required',
-			'smd_um_new_user' => 'New user',
-			'smd_um_pass_change_error' => 'Password NOT saved',
-			'smd_um_pass_length' => 'Password length (characters)',
-			'smd_um_prf_lbl' => 'Prefs',
-			'smd_um_prf_legend' => 'User Manager Preferences',
-			'smd_um_prf_saved' => 'Preferences saved',
-			'smd_um_prv_created' => 'Priv area "{area}" created',
-			'smd_um_prv_deleted' => 'Priv area deleted',
-			'smd_um_prv_exists' => 'Priv area already exist',
-			'smd_um_prv_lbl' => 'Privs',
-			'smd_um_prv_new' => 'New priv area',
-			'smd_um_prv_saved' => 'Privs updated',
-			'smd_um_prv_smd_um' => 'Cannot create privs for smd_user_manager',
-			'smd_um_reset' => '[R]',
-			'smd_um_sel_all' => 'Select the entire area then (c)heck, (u)ncheck or (t)oggle highlighted checkboxes',
-			'smd_um_sel_grp' => 'Select this group then (c)heck, (u)ncheck or (t)oggle highlighted checkboxes',
-			'smd_um_sel_prv' => 'Select this area set then (c)heck, (u)ncheck or (t)oggle highlighted checkboxes',
-			'smd_um_sel_reset' => 'Reset: any checked area sets will revert to their defaults after Save',
-			'smd_um_self_alter' => 'Allow smd_um privs to be altered',
-			'smd_um_tbl_remove_lbl' => 'Remove',
-			'smd_um_tbl_install_lbl' => 'Install',
-			'smd_um_tbl_installed' => 'Tables installed',
-			'smd_um_tbl_not_installed' => 'Tables not installed',
-			'smd_um_tbl_removed' => 'Tables removed',
-			'smd_um_tbl_not_removed' => 'Tables not removed',
-			'smd_um_user_count' => 'Users in this group: ',
-			'smd_um_usr_lbl' => 'Users',
+// Settings for the plugin
+function smd_um_get_prefs() {
+	global $prefs;
+
+	$smd_um_prefs = array(
+		'smd_um_hierarchical_groups' => array(
+			'html'     => 'yesnoradio',
+			'type'     => PREF_HIDDEN,
+			'position' => 10,
+			'default'  => '0',
+			'group'    => 'smd_um_settings',
+		),
+		'smd_um_admin_group' => array(
+			'html'     => 'selectlist',
+			'type'     => PREF_HIDDEN,
+			'position' => 20,
+			'content'  => array(get_groups(), false),
+			'default'  => '1',
+			'group'    => 'smd_um_settings',
+		),
+		'smd_um_max_search_limit' => array(
+			'html'     => 'text_input',
+			'type'     => PREF_HIDDEN,
+			'position' => 30,
+			'default'  => '500',
+			'group'    => 'smd_um_settings',
+		),
+		'smd_um_pass_length' => array(
+			'html'     => 'text_input',
+			'type'     => PREF_HIDDEN,
+			'position' => 40,
+			'default'  => '12',
+			'group'    => 'smd_um_settings',
+		),
+		'smd_um_active_timeout' => array(
+			'html'     => 'text_input',
+			'type'     => PREF_HIDDEN,
+			'position' => 50,
+			'default'  => '60',
+			'group'    => 'smd_um_settings',
+		),
+		'smd_um_self_alter' => array(
+			'html'     => 'yesnoradio',
+			'type'     => PREF_HIDDEN,
+			'position' => 60,
+			'default'  => '0',
+			'group'    => 'smd_um_settings',
 		),
 	);
 
-	$thislang = get_pref('language', 'en-gb');
-	$thislang = (isset($lang[$thislang][$what])) ? $thislang : 'en-gb';
-	return strtr($lang[$thislang][$what], $atts);
+	return $smd_um_prefs;
 }
 # --- END PLUGIN CODE ---
 if (0) {
 ?>
 <!--
-# --- BEGIN PLUGIN CSS ---
-<style type="text/css">
-#smd_help { line-height:1.5 ;}
-#smd_help code { font-weight:bold; font: 105%/130% "Courier New", courier, monospace; background-color: #f0e68c; color:#333; }
-#smd_help code.block { font-weight:normal; border:1px dotted #999; display:block; margin:10px 10px 20px; padding:10px; }
-#smd_help h1 { font: 22px Georgia, serif; margin: 0; text-align: center; }
-#smd_help h2 { border-bottom: 1px solid black; padding:10px 0 0; font: 18px Georgia, serif; }
-#smd_help h3 { font: bold 13px Georgia, serif; letter-spacing: 1px; margin: 20px 0 0; text-decoration:underline; }
-#smd_help h4 { font: bold 12px Georgia, serif; letter-spacing: 1px; margin: 10px 0 0; text-transform: uppercase; }
-#smd_help .atnm { font-weight:bold; }
-#smd_help .mand { background:#eee; border:1px dotted #999; }
-#smd_help table { width:90%; text-align:center; padding-bottom:1em; border-collapse:collapse; }
-#smd_help td, #smd_help th { border:1px solid #999; padding:.5em; }
-#smd_help ul { list-style-type:square; }
-#smd_help .important { color:red; }
-#smd_help li { margin:5px 20px 5px 30px; }
-#smd_help .break { margin-top:5px; }
-#smd_help dl dd { margin:2px 15px; }
-#smd_help dl dd:before { content: "\2022\00a0"; }
-#smd_help dl dd dl { padding: 0 15px; }
-</style>
-# --- END PLUGIN CSS ---
--->
-<!--
 # --- BEGIN PLUGIN HELP ---
-<div id="smd_help">
+h1. smd_user_manager
 
-	<h1>smd_user_manager</h1>
+Complete user / group / privs management. Features:
 
-	<p>Complete user / group / privs management. Features:</p>
+* Replaces _Admin->Users_ tab
+* Add / edit / list users, with content counts alongside each user
+* Search, sort, or filter the users (standard Txp pagination result depths apply)
+* Quickly find accounts with certain characteristics (e.g. self-registered spam accounts with 0 articles)
+* Perform multi-edits: change privilege / reset pass / delete
+* All users can edit their own details and change their password
+* Create new user groups (a.k.a. roles) if the default six aren't enough
+* Rename existing groups to more suitable names (you cannot delete them)
+* Modify Txp's standard priv areas to alter what each user group can see/do
+* Add new priv areas (useful for custom code to save doing it in a plugin)
+* A "who's online" indicator
+* Integrates with smd_bio (v0.40+) and smd_prognostics (v0.20+)
 
-	<ul>
-		<li>Replaces <em>Admin-&gt;Users</em> tab</li>
-		<li>Add / edit / list users, with content counts alongside each user</li>
-		<li>Search, sort, or filter the users (standard Txp pagination result depths apply)</li>
-		<li>Quickly find accounts with certain characteristics (e.g. self-registered spam accounts with 0 articles)</li>
-		<li>Perform multi-edits: change privilege / reset pass / delete</li>
-		<li>All users can edit their own details and change their password</li>
-		<li>Create new user groups (a.k.a. roles) if the default six aren&#8217;t enough</li>
-		<li>Rename existing groups to more suitable names (you cannot delete them)</li>
-		<li>Modify Txp&#8217;s standard priv areas to alter what each user group can see/do</li>
-		<li>Add new priv areas (useful for custom code to save doing it in a plugin)</li>
-		<li>A &#8220;who&#8217;s online&#8221; indicator</li>
-		<li>Integrates with smd_bio (v0.40+) and smd_prognostics (v0.20+)</li>
-	</ul>
+h2. Installation / uninstallation
 
-	<h2>Author / credits</h2>
+p(important). Requires Txp 4.5.0+
 
-	<p>Written by <a href="http://stefdawson.com/contact">Stef Dawson</a>. Thanks to the beta test team jakob, mrdale, alanfluff, maverick, Destry, redbot, and rsilletti for their willingness to let my code loose on their servers.</p>
+Download the plugin from either "textpattern.org":http://textpattern.org/plugins/1229/smd_user_manager, or the "software page":http://stefdawson.com/sw, paste the code into the Txp _Admin->Plugins_ pane, install and enable the plugin. The tables will be installed and populated automatically unless you use the plugin from the cache directory; in either case, visiting the _Admin->User manager_ tab will install and populate them.
 
-	<h2>Installation / uninstallation</h2>
+To uninstall the plugin, first assign all your users to groups in Txp's first six, then delete the plugin from the _Admin->Plugins_ page. The tables will be deleted automatically. If you do not reassign users to those default groups, you may have users with 'dangling' (i.e. no) privs. The outcome of what happens when such users log in is thus undefined: at the very least you'll get admin-side errors thrown.
 
-	<p class="important">Requires Txp 4.4.1+</p>
+Visit the "forum thread":http://forum.textpattern.com/viewtopic.php?id=36558 for more info or to report on the success or otherwise of the plugin.
 
-	<p>Download the plugin from either <a href="http://textpattern.org/plugins/1229/smd_user_manager">textpattern.org</a>, or the <a href="http://stefdawson.com/sw">software page</a>, paste the code into the Txp <em>Admin-&gt;Plugins</em> pane, install and enable the plugin. The tables will be installed and populated automatically unless you use the plugin from the cache directory; in either case, visiting the <em>Admin-&gt;User manager</em> tab will install and populate them.</p>
+h2. Admin side overview
 
-	<p>To uninstall the plugin, first assign all your users to groups in Txp&#8217;s first six, then delete the plugin from the <em>Admin-&gt;Plugins</em> page. The tables will be deleted automatically. If you do not reassign users to those default groups, you may have users with &#8216;dangling&#8217; (i.e. no) privs. The outcome of what happens when such users log in is thus undefined.</p>
+Visit the _Admin->User manager_ tab. The default view (for admins) is a list of users. There are buttons at the top of the screen: __Change password__, "Users":#smd_um_users, "Groups":#smd_um_groups, "Privs":#smd_um_privs, and "Prefs":#smd_um_prefs. Each of those displays an area for the management of that component.
 
-	<p>Visit the <a href="http://forum.textpattern.com/viewtopic.php?id=36558">forum thread</a> for more info or to report on the success or otherwise of the plugin.</p>
+Please note: The plugin tries to remove the _Admin->Users_ menu, but depending on your installed theme this may not be possible. If the menu item remains, it will perform the same function as clicking the _User manager_ tab.
 
-	<h2>Admin side overview</h2>
+h2(#smd_um_users). User management (_Users_ button)
 
-	<p>Visit the <em>Admin-&gt;User manager</em> tab. The default view (for admins) is a list of users. There are buttons towards the top right-hand area of the screen: <a href="#smd_um_users">Users</a>, <a href="#smd_um_groups">Groups</a>, <a href="#smd_um_privs">Privs</a>, and <a href="#smd_um_prefs">Prefs</a>. Each of those displays an area for the management of that component.</p>
+View / search the installed user base. Change the number of users you wish to see per page by using the 'per page' dropdown below the list. The columns on display are:
 
-	<p>Please note: The plugin tries to remove the <em>Admin-&gt;Users</em> menu, but depending on your installed theme this may not be possible. If the menu item remains, it will perform the same function as clicking the <em>User manager</em> tab.</p>
+* Login -- user name
+* Real Name -- full name
+* E-mail -- e-mail address
+* Privileges -- user group
+* Last Login -- month & year of last access to the Textpattern admin side
+* Articles -- number of articles authored by this user
+* Images -- number of images uploaded by this user
+* Files -- number of files uploaded by this user
+* Links -- number of links created by this user
 
-	<h2 id="smd_um_users">User management (<em>Users</em> button)</h2>
+Click _New user_ (admins only) to create a new user account and automatically send a randomly-generated password to the nominated e-mail address.
+Click a login name (privileges required) to edit the details about that user. If you have any smd_bio fields set up, they can also be edited (and hovering over the login name will retrieve some extended biographical info).
+Click an e-mail address to launch your e-mail software to send a message to the user.
+Click an article / image / file / link value to see the content owned by that user.
 
-	<p>View / search the installed user base. Change the number of users you wish to see per page by using the &#8216;per page&#8217; dropdown below the list. The columns on display are:</p>
+You may sort the columns by clicking the headings. Click once to sort in ascending order, click again to sort in descending order. An arrow shows the sort direction. Your sort column and direction are remembered next time you visit the panel.
 
-	<ul>
-		<li>Login &#8212; user name</li>
-		<li>Real Name &#8212; full name</li>
-		<li>E-mail &#8212; e-mail address</li>
-		<li>Privileges &#8212; user group</li>
-		<li>Last Login &#8212; month &amp; year of last access to the Textpattern admin side</li>
-		<li>Articles &#8212; number of articles authored by this user</li>
-		<li>Images &#8212; number of images uploaded by this user</li>
-		<li>Files &#8212; number of files uploaded by this user</li>
-		<li>Links &#8212; number of links created by this user</li>
-	</ul>
+You may also search users by login name, real name, e-mail address, privilege level (number or name), or content count. A few notes about searching:
 
-	<p>Click <em>New user</em> (admins only) to create a new user account and automatically send a randomly-generated password to the nominated e-mail address.<br />
-Click a login name (privileges required) to edit the details about that user. If you have any smd_bio fields set up, they can also be edited (and hovering over the login name will retrieve some extended biographical info).<br />
-Click an e-mail address to launch your e-mail software to send a message to the user.<br />
-Click an article / image / file / link value to see the content owned by that user.</p>
+* When searching privileges by name, only the _first matching_ group will be returned -- the privs are searched in order of their ID.
+* You may search privileges and content counts by specifying an exact value, for example Article count: 0 shows all accounts with no articles (perhaps a self-registered spammer or malicious user?)
+* You may also search these fields using greater-than or less-than symbols to find users with the matching number of assets. For example, Image count: @>=50@ shows all users with 50 images or more.
 
-	<p>You may sort the columns by clicking the headings. Click once to sort in ascending order, click again to sort in descending order. An arrow shows the sort direction. Your sort column and direction are remembered next time you visit the panel.</p>
+You can also perform multi-edits by selecting the rows to alter via the checkboxes and using the dropdown immediately below the list to make mass changes. The options are:
 
-	<p>You may also search users by login name, real name, e-mail address, privilege level (number or name), or content count. A few notes about searching:</p>
+* Change privileges: set all selected users to the given privilege level. When you choose this option, a further dropdown appears to allow you to choose which level to apply.
+* Reset password: send a new password to all selected users.
+* Delete: remove all selected user accounts. A further dropdown appears with a list of user accounts in it: choose one to transfer over any content that belonged to the deleted user(s).
 
-	<ul>
-		<li>When searching privileges by name, only the <em>first matching</em> group will be returned &#8212; the privs are searched in order of their ID.</li>
-		<li>You may search privileges and content counts by specifying an exact value, for example Article count: 0 shows all accounts with no articles (perhaps a self-registered spammer or malicious user?)</li>
-		<li>You may also search these fields using greater-than or less-than symbols to find users with the matching number of assets. For example, Image count: <code>&gt;=50</code> shows all users with 50 images or more.</li>
-	</ul>
+A common use is to find any users with 0 articles, and then use the multi-edit tool to delete them all.
 
-	<p>You can also perform multi-edits by selecting the rows to alter via the checkboxes on the right of each row and using the dropdown immediately below the list to make mass changes. The options are:</p>
+h2(#smd_um_groups). Group management (_Groups_ button)
 
-	<ul>
-		<li>Change privileges: set all selected users to the given privilege level. When you choose this option, a further dropdown appears to allow you to choose which level to apply.</li>
-		<li>Reset password: send a new password to all selected users.</li>
-		<li>Delete: remove all selected user accounts. A further dropdown appears with a list of user accounts in it: choose one to transfer over any content that belonged to the deleted user(s).</li>
-	</ul>
+This panel allows you to alter the names of Txp's built-in 6 groups to suit your application. It changes the Titles in the currently installed language only.
 
-	<p>A common use is to find any users with 0 articles, and then use the multi-edit tool to delete them all.</p>
+You may also add a new group using the input controls and accompanying _Create_ button at the top of the panel. If you choose to only enter a Title, a name will be automatically generated (lower case, with most non-ASCII characters replaced by safe characters). Alternatively, you can type your own name, though please stick to 'simple' letters and numbers to make things easy on yourself later. If you choose an existing group from the _based on_ dropdown, the privs for that group will be copied across to your new group.
 
-	<h2 id="smd_um_groups">Group management (<em>Groups</em> button)</h2>
+Custom groups can be deleted using the 'x' button alongside each. Any users that were assigned to that group will have their privileges reduced to 'None'. Either visit the _Users_ panel and alter their priv level to something suitable, or set their level to something else prior to deleting the group.
 
-	<p>This panel allows you to alter the names of Txp&#8217;s built-in 6 groups to suit your application. It changes the Titles in the currently installed language only.</p>
+If any group contains at least one user, the group ID values are hyperlinked back to the Users panel to show only those users in that group. This is handy for reassigning priv levels before deleting a group. If you hover over the priv ID, a tooltip will display the number of users assigned to that privilege group.
 
-	<p>You may also add a new group using the input controls and accompanying <em>Create</em> button at the top of the panel. If you choose to only enter a Title, a name will be automatically generated (lower case, with most non-<span class="caps">ASCII</span> characters replaced by safe characters). Alternatively, you can type your own name, though please stick to &#8216;simple&#8217; letters and numbers to make things easy on yourself later. If you choose an existing group from the <em>based on</em> dropdown, the privs for that group will be copied across to your new group.</p>
+h2(#smd_um_privs). Priv management (_Privs_ button)
 
-	<p>Custom groups can be deleted using the &#8216;x&#8217; button alongside each. Any users that were assigned to that group will have their privileges reduced to &#8216;None&#8217;. Either visit the <em>Users</em> panel and alter their priv level to something suitable, or set their level to something else prior to deleting the group.</p>
+From this panel you may alter which user groups can access which parts of the admin side interface or perform certain types of action. You will see a list of 'area' headings. Click one to expand it and see the privileges it contains; click it again to collapse it. The open/closed state of the areas is remembered next time you visit the panel.
 
-	<p>If any group contains at least one user, the group ID values are hyperlinked back to the Users panel to show only those users in that group. This is handy for reassigning priv levels before deleting a group. If you hover over the priv ID, a tooltip will display the number of users assigned to that privilege group.</p>
+Each area has a row of checkboxes alongside it. If a checkbox is ticked in a column corresponding to a privilege group, that group has access to that feature of the interface. You may alter who sees what by changing the tick boxes and hitting one of the _Save_ buttons that appear to the left of each area heading; all the buttons do the same thing: they save the entire list of privileges. You must confirm the action, because the change is immediate.
 
-	<h2 id="smd_um_privs">Priv management (<em>Privs</em> button)</h2>
+You may change checkboxes in batches by selecting rows/columns and then using a keyboard shortcut to make changes to all highlighted checkboxes. Firstly, choose which checkboxes to apply your changes:
 
-	<p>From this panel you may alter which user groups can access which parts of the admin side interface or perform certain types of action. You will see a list of &#8216;area&#8217; headings. Click one to expand it and see the privileges it contains; click it again to collapse it. The open/closed state of the areas is remembered next time you visit the panel.</p>
+# click a column heading to highlight that entire Group
+# click a row heading to highlight that entire Priv set
+# click the top left-hand corner of the collapsible table to select all checkboxes
 
-	<p>Each area has a row of checkboxes alongside it. If a checkbox is ticked in a column corresponding to a privilege group, that group has access to that feature of the interface. You may alter who sees what by changing the tick boxes and hitting one of the <em>Save</em> buttons that appear to the left of each area heading; all the buttons do the same thing: they save the entire list of privileges. You must confirm the action, because the change is immediate.</p>
+You can select multiple columns/rows from multiple areas if you wish. Clicking a row/column/corner heading again will toggle its status.
 
-	<p>You may change checkboxes in batches by selecting rows/columns and then using a keyboard shortcut to make changes to all highlighted checkboxes. Firstly, choose which checkboxes to apply your changes:</p>
+When you are ready to make changes to the selected checkboxes, you can use the following keys:
 
-	<ol>
-		<li>click a column heading to highlight that entire Group</li>
-		<li>click a row heading to highlight that entire Priv set</li>
-		<li>click the top left-hand corner of the collapsible table to select all checkboxes</li>
-	</ol>
+* @c@ to check all selected boxes
+* @u@ to uncheck all selected boxes
+* @t@ to toggle the status of all selected boxes (checked become unchecked, and vice versa)
+* @d@ deselects all rows / columns you have highlighted
 
-	<p>You can select multiple columns/rows from multiple areas if you wish. Clicking a row/column/corner heading again will toggle its status.</p>
+The area headings merely group the areas for convenience and make the page look less scary! Any plugins you have installed will be shown under an area heading of the author's three-letter prefix. Note that altering privs here overrides the privs as set by the plugin so you can customise who sees what, _as long as the plugin in question is loaded before smd_user_manager_. Check the plugin load order values if things aren't working as you expect.
 
-	<p>When you are ready to make changes to the selected checkboxes, you can use the following keys:</p>
+The 'tab' area heading governs which user groups have access to the primary navigation areas (content, presentation, admin, extensions and any custom tabs such as those created by smd_tabber). Note that giving access to these tabs does not automatically give access to the secondary navigation elements; you must turn those on independently. By contrast, giving a user group access to a secondary navigation item _does_ allow them to use that feature but they won't be able to navigate to it using the primary navigation button unless they have also been given access to that tab.
 
-	<ul>
-		<li><code>c</code> to check all selected boxes</li>
-		<li><code>u</code> to uncheck all selected boxes</li>
-		<li><code>t</code> to toggle the status of all selected boxes (checked become unchecked, and vice versa)</li>
-		<li><code>d</code> deselects all rows / columns you have highlighted</li>
-	</ul>
+For example, if you grant the 'page' privilege to Freelancers but don't give them access to the Presentation tab, they could type @?event=page@ in the URL to get to the Pages panel but they would have no means of navigating there by clicking the mouse. Since the primary 'Presentation' tab is missing, the secondary tabs are all missing too, even though some of them may be permitted for that group of users.
 
-	<p>The area headings merely group the areas for convenience and make the page look less scary! Any plugins you have installed will be shown under an area heading of the author&#8217;s three-letter prefix. Note that altering privs here overrides the privs as set by the plugin so you can customise who sees what, <em>as long as the plugin in question is loaded before smd_user_manager</em>. Check the plugin load order values if things aren&#8217;t working as you expect.</p>
+If you wish to add your own priv area, type a new one in the box at the top of the panel and hit _Create_. Your area will be created under the appropriate heading, e.g. if you specified @smd_test@ it would appear under the @smd@ heading, or if you created a @file.trusted@ privilege area, it would appear under the @file@ heading. Core areas are normally specified by a dotted notation but you are free to choose any notation that makes sense to your application.
 
-	<p>The &#8216;tab&#8217; area heading governs which user groups have access to the primary navigation areas (content, presentation, admin, extensions and any custom tabs such as those created by smd_tabber). Note that giving access to these tabs does not automatically give access to the secondary navigation elements; you must turn those on independently. By contrast, giving a user group access to a secondary navigation item <em>does</em> allow them to use that feature but they won&#8217;t be able to navigate to it using the primary navigation button unless they have also been given access to that tab.</p>
+Note that:
 
-	<p>For example, if you grant the &#8216;page&#8217; privilege to Freelancers but don&#8217;t give them access to the Presentation tab, they could type <code>?event=page</code> in the <span class="caps">URL</span> to get to the Pages panel but they would have no means of navigating there by clicking the mouse. Since the primary &#8216;Presentation&#8217; tab is missing, the secondary tabs are all missing too, even though some of them may be permitted for that group of users.</p>
+# some plugins may not show up in the list due to factors such as plugin load order or the mechanism by which the plugin is written.
+# the @[R]@ column is a special Reset indicator. Checking any row in this column will ignore any privilege checkboxes you may have set or altered and will reset the corresponding privs to their defaults after you click Save.
+# by default you may not add @smd_um@ privs to override the functionality if this plugin, although you can adjust who can edit what so be careful not to open the permissions too widely. A preference setting governs whether smd_um can have its own privs altered.
+# you can create priv areas that may be tested from the public side using the "smd_um_has_privs":#smd_um_has_privs tag.
 
-	<p>If you wish to add your own priv area, type a new one in the box at the top of the panel and hit <em>Create</em>. Your area will be created under the appropriate heading, e.g. if you specified <code>smd_test</code> it would appear under the <code>smd</code> heading, or if you created a <code>file.trusted</code> privilege area, it would appear under the <code>file</code> heading. Core areas are normally specified by a dotted notation but you are free to choose any notation that makes sense to your application.</p>
+h2(#smd_um_prefs). Preference management (_Prefs_ button)
 
-	<p>Note that:</p>
+Administrators can set global preferences that govern the behaviour of the plugin:
 
-	<ol>
-		<li>some plugins may not show up in the list due to factors such as plugin load order or the mechanism by which the plugin is written.</li>
-		<li>the <code>[R]</code> column is a special Reset indicator. Checking any row in this column will ignore any privilege checkboxes you may have set or altered and will reset the corresponding privs to their defaults after you click Save.</li>
-		<li>by default you may not add <code>smd_um</code> privs to override the functionality if this plugin, although you can adjust who can edit what so be careful not to open the permissions too widely. A preference setting governs whether smd_um can have its own privs altered.</li>
-		<li>you can create priv areas that may be tested from the public side using the <a href="#smd_um_has_privs">smd_um_has_privs</a> tag.</li>
-	</ol>
+; *Assume hierarchical groups*
+: Textpattern does not normally have the notion of escalating privilege levels. A Copy Editor is not _greater than_ a Staff Writer, for example, they just have different permissions to fulfil the relevant role.
+: You may set this preference to _yes_ to force Textpattern to treat your levels as a hierarchy, i.e. lower numbers are "more powerful" than higher numbers (with the exception of 0: None which is always 'no privs').
+: Once set, logged-in users may not create or edit any other users that are 'above' their assigned privs, e.g. Copy Editors cannot modify Publisher or Managing Editor accounts. Further, it is not possible to alter your own privileges, nor can you create a user with a greater priv level than you possess.
+: Default: no
+; *Protected administrator group*
+: Nominate a group that you wish only administrators to be able to alter/create.
+: Once set, the nominated group is off-limits to all users apart from those already in the selected group. In other words, non-admin users cannot create, modify, alter (or mass-alter) any privilege setting using this group.
+: Can be used in tandem with or independently of the _Assume hierarchical groups_ setting.
+: Default: 1 (a.k.a. Publishers)
+; *Maximum user search result limit*
+: Maximum number of search results to return when filtering the User list.
+: Default: 500
+; *Password length (characters)*
+: The number of characters in newly-generated passwords. The higher the better (up to a point).
+: Default: 12
+; *Activity timeout (seconds)*
+: Number of seconds within which someone has to perform an admin-side action to remain visible on the Active Users list. For high activity sites, you can lower this value and receive a more responsive (accurate) list, at the possible expense of more perceived fluctuations in user activity when the timeout is exceeded. Lengthening the value will keep online users in the list longer, even though they may not actually still be active.
+: Default: 60
+; *Allow smd_um privs to be altered*
+: Set this to _yes_ to allow smd_um privs to be changed from the Privs panel.
+: Default: no
 
-	<h2 id="smd_um_prefs">Preference management (<em>Prefs</em> button)</h2>
+h2(#smd_um_non_admin). Non-admin users
 
-	<p>Administrators can set global preferences that govern the behaviour of the plugin:</p>
+User accounts without privileges to list users will automatically be shown the Edit screen for their own user account. This is the only account that can be edited. If smd_bio is installed, additional biographical information may also be edited.
 
-	<dl>
-		<dt><strong>Assume hierarchical groups</strong></dt>
-		<dd>Textpattern does not normally have the notion of escalating privilege levels. A Copy Editor is not <em>greater than</em> a Staff Writer, for example, they just have different permissions to fulfil the relevant role.</dd>
-		<dd>You may set this preference to <em>yes</em> to force Textpattern to treat your levels as a hierarchy, i.e. lower numbers are &#8220;more powerful&#8221; than higher numbers (with the exception of 0: None which is always &#8216;no privs&#8217;).</dd>
-		<dd>Once set, logged-in users may not create or edit any other users that are &#8216;above&#8217; their assigned privs, e.g. Copy Editors cannot modify Publisher or Managing Editor accounts. Further, it is not possible to alter your own privileges, nor can you create a user with a greater priv level than you possess.</dd>
-		<dd>Default: no</dd>
-		<dt><strong>Protected administrator group</strong></dt>
-		<dd>Nominate a group that you wish only administrators to be able to alter/create.</dd>
-		<dd>Once set, the nominated group is off-limits to all users apart from those already in the selected group. In other words, non-admin users cannot create, modify, alter (or mass-alter) any privilege setting using this group.</dd>
-		<dd>Can be used in tandem with or independently of the <em>Assume hierarchical groups</em> setting.</dd>
-		<dd>Default: 1 (a.k.a. Publishers)</dd>
-		<dt><strong>Maximum user search result limit</strong></dt>
-		<dd>Maximum number of search results to return when filtering the User list.</dd>
-		<dd>Default: 500</dd>
-		<dt><strong>Password length (characters)</strong></dt>
-		<dd>The number of characters in newly-generated passwords. The higher the better (up to a point).</dd>
-		<dd>Default: 12</dd>
-		<dt><strong>Activity timeout (seconds)</strong></dt>
-		<dd>Number of seconds within which someone has to perform an admin-side action to remain visible on the Active Users list. For high activity sites, you can lower this value and receive a more responsive (accurate) list, at the possible expense of more perceived fluctuations in user activity when the timeout is exceeded. Lengthening the value will keep online users in the list longer, even though they may not actually still be active.</dd>
-		<dd>Default: 60</dd>
-		<dt><strong>Allow smd_um privs to be altered</strong></dt>
-		<dd>Set this to <em>yes</em> to allow smd_um privs to be changed from the Privs panel.</dd>
-		<dd>Default: no</dd>
-	</dl>
+Users may also change their password using the button at the top of the screen.
 
-	<h2 id="smd_um_non_admin">Non-admin users</h2>
+h2(#smd_um_active). Active users
 
-	<p>User accounts without privileges to list users will automatically be shown the Edit screen for their own user account. This is the only account that can be edited. If smd_bio is installed, additional biographical information may also be edited.</p>
+At the bottom of each smd_user_manager panel is a list of currently active ("online") users. Each user is hyperlinked to the "Users":#smd_um_users panel to show you the info about just that person, which is a convenient shortcut to find out about a logged-in author.
 
-	<p>Users may also change their password using the form at the bottom of the screen. The change password feature integrates with smd_prognostics to show password crackability hints.</p>
+An active user is one who has performed some admin-side action in the past N seconds, where N is defined in the "Activity Timeout plugin preference":#smd_um_prefs.
 
-	<h2 id="smd_um_active">Active users</h2>
+h2. Public side tags
 
-	<p>At the bottom of each smd_user_manager panel is a list of currently active (&#8220;online&#8221;) users. Each user is hyperlinked to the <a href="#smd_um_users">Users</a> panel to show you the info about just that person, which is a convenient shortcut to find out about a logged-in author.</p>
+h3(#smd_um_has_privs). Tag: @<txp:smd_um_has_privs>@
 
-	<p>An active user is one who has performed some admin-side action in the past N seconds, where N is defined in the <a href="#smd_um_prefs">Activity Timeout plugin preference</a>.</p>
+Use this conditional tag to check if the currently logged-in user has permissions to perform some action. If they have, the contained content is executed. Supports @<txp:else />@.
 
-	<h2>Public side tags</h2>
+Note that the plugin does not have a public-side logging in/out facility, it merely allows you to test whether someone who has logged in via the admin side (or via a third party login plugin) has necessary privileges.
 
-	<h3 id="smd_um_has_privs">Tag: <code>&lt;txp:smd_um_has_privs&gt;</code></h3>
+Attributes:
 
-	<p>Use this conditional tag to check if the currently logged-in user has permissions to perform some action. If they have, the contained content is executed. Supports <code>&lt;txp:else /&gt;</code>.</p>
+; %name%
+: Check the current logged-in user's name against this list of names.
+: IMPORTANT: Case sensitive.
+; %group%
+: Check the current logged-in user's group (privilege) level is in this list of numbers.
+: You can specify @>@ and @<@ symbols before any value to indicate you wish to check if the user has privileges higher or lower than a given number, respectively.
+: If checking priv values less than a number, 0 (a.k.a None) is _never_ included: you must add it to the list explicitly if you wish to test for it.
+: Example: @group="11, <4"@ means "does the user have privs of 11, 1, 2, or 3?"
+; %area%
+: Check the current logged-in user has the ability to access one of the given areas in this list.
+: Example: @area="sports_hall, chemistry_lab"@ would only perform the contained content if the logged-in user's priv level was present in either the sports_hall or chemistry_lab priv areas.
 
-	<p>Note that the plugin does not have a public-side logging in/out facility, it merely allows you to test whether someone who has logged in via the admin side (or via a third party login plugin) has necessary privileges.</p>
+Notes:
 
-	<p>Attributes:</p>
+* You can combine the attributes in any way: the contained content will only be executed if the logged-in user matches *all* the criteria.
+* Without any attributes, the contained content will be executed if anybody is logged in, regardless of their name, privs or assigned areas.
+* Again: login @name@s are case sensitive
 
-	<dl>
-		<dt><span class="atnm">name</span></dt>
-		<dd>Check the current logged-in user&#8217;s name against this list of names.</dd>
-		<dd><span class="caps">IMPORTANT</span>: Case sensitive.</dd>
-		<dt><span class="atnm">group</span></dt>
-		<dd>Check the current logged-in user&#8217;s group (privilege) level is in this list of numbers.</dd>
-		<dd>You can specify <code>&gt;</code> and <code>&lt;</code> symbols before any value to indicate you wish to check if the user has privileges higher or lower than a given number, respectively.</dd>
-		<dd>If checking priv values less than a number, 0 (a.k.a None) is <em>never</em> included: you must add it to the list explicitly if you wish to test for it.</dd>
-		<dd>Example: <code>group=&quot;11, &lt;4&quot;</code> means &#8220;does the user have privs of 11, 1, 2, or 3?&#8221;</dd>
-		<dt><span class="atnm">area</span></dt>
-		<dd>Check the current logged-in user has the ability to access one of the given areas in this list.</dd>
-		<dd>Example: <code>area=&quot;sports_hall, chemistry_lab&quot;</code> would only perform the contained content if the logged-in user&#8217;s priv level was present in either the sports_hall or chemistry_lab priv areas.</dd>
-	</dl>
+h2. Author / credits
 
-	<p>Notes:</p>
+Written by "Stef Dawson":http://stefdawson.com/contact. Thanks to the beta test team jakob, mrdale, alanfluff, maverick, Destry, redbot, and rsilletti for their willingness to let my code loose on their servers.
 
-	<ul>
-		<li>You can combine the attributes in any way: the contained content will only be executed if the logged-in user matches <strong>all</strong> the criteria.</li>
-		<li>Without any attributes, the contained content will be executed if anybody is logged in, regardless of their name, privs or assigned areas.</li>
-		<li>Again: login <code>name</code>s are case sensitive</li>
-	</ul>
+h2. Changelog
 
-	<h2>Changelog</h2>
-
-	<ul>
-		<li>27 Jul 2011 | v0.10 | Initial public release</li>
-		<li>03 Nov 2011 | v0.11 | Added smd_um_has_privs tag to check privs/areas ; added preference to allow editing of smd_um privs; fixed handling of users with privs=None</li>
-	</ul>
-
-</div>
+* 27 Jul 2011 | v0.10 | Initial public release
+* 03 Nov 2011 | v0.11 | Added smd_um_has_privs tag to check privs/areas ; added preference to allow editing of smd_um privs; fixed handling of users with privs=None
+* 25 Jan 2012 | v0.12 | Fixed smd_um_has_privs multiple area check ; fixed prefs options from Plugins pane
+* 25 Apr 2013 | v0.20 | Updated for Txp 4.5.0+
 # --- END PLUGIN HELP ---
 -->
 <?php

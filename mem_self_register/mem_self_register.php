@@ -966,12 +966,12 @@ function mem_self_password_reset_form_submit()
 		$subject = $mem_form_values['subject'];
 
 		if (mem_form_mail($from,$reply,$to,$subject,$msg))
-			return mem_self_gTxt('password_reset_confirmation_request_sent');
+			return '<ul class="memError"><li>'.mem_self_gTxt('password_reset_confirmation_request_sent').'</li></ul>';
 		else
-			return mem_self_gTxt('mail_sorry');
+			return '<ul class="memError"><li>'.mem_self_gTxt('mail_sorry').'</li></ul>';
 	}
 	else
-		return mem_self_gTxt('user_not_found');
+			return '<ul class="memError"><li>'.mem_self_gTxt('user_not_found').'</li></ul>';
 }
 
 
