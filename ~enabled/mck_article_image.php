@@ -1,0 +1,1 @@
+../mck_article_image/mck_article_image.php

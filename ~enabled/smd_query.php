@@ -1,0 +1,1 @@
+../smd_query/smd_query.php

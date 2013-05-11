@@ -1,0 +1,1 @@
+../smd_each/smd_each.php
