@@ -1,0 +1,1 @@
+../mem_self_register/mem_self_register.php
