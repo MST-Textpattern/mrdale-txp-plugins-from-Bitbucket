@@ -17,7 +17,7 @@ $plugin['name'] = 'mem_postmaster';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '1.0.12';
+$plugin['version'] = '1.0.15';
 $plugin['author'] = 'Michael Manfre';
 $plugin['author_uri'] = 'http://manfre.net/';
 $plugin['description'] = 'Simple email-on-post/newsletter manager for Textpattern';
@@ -53,18 +53,14 @@ $plugin['flags'] = '0';
 // #@event
 // #@language ISO-LANGUAGE-CODE
 // abc_string_name => Localized String
-
-/** Uncomment me, if you need a textpack
 $plugin['textpack'] = <<< EOT
 #@admin
-#@language en-gb
-abc_sample_string => Sample String
-abc_one_more => One more
-#@language de-de
-abc_sample_string => Beispieltext
-abc_one_more => Noch einer
+bab_pm_email_to_subscribers => Email to subscribers
+bab_pm_label_list_to_email => List to email
+bab_pm_label_send_from => Send from
+bab_pm_send_to_list => Send to List
+bab_pm_send_to_test => Send to Test
 EOT;
-**/
 // End of textpack
 
 if (!defined('txpinterface'))
@@ -81,91 +77,73 @@ Support forum thread: http://forum.textpattern.com/viewtopic.php?id=19510
 @include_plugin('mem_postmaster_library'); // postmaster library functions
 register_callback('bab_pm_zemcontact_submit','zemcontact.submit'); // plugs into zem_contact, public-side
 if (@txpinterface == 'admin') {
-add_privs ('prefs.bab_pm', '1,2');
+	add_privs ('prefs.bab_pm', '1,2');
 	add_privs('postmaster', '1,2'); // see help for details
 	register_tab('extensions', 'postmaster', 'Postmaster');
 	register_callback('bab_postmaster', 'postmaster');
 	register_callback('bab_pm_zemcontact_submit','zemcontact.submit');
-	register_callback("bab_pm_eop", 'article' , 'edit', '0');
-	register_callback("bab_pm_eop", 'article' , 'save', '0');
-	register_callback("bab_pm_eop", 'article' , 'publish', '0');
+//	register_callback("bab_pm_eop", 'article' , 'edit', '0');
+//	register_callback("bab_pm_eop", 'article' , 'save', '0');
+//	register_callback("bab_pm_eop", 'article' , 'publish', '0');
 //	register_callback("bab_pm_writetab", 'article' , ''); // default is "only while editing"
 	register_callback("bab_pm_writetab", 'article' , 'edit');
-	register_callback("bab_pm_writetab", 'article' , 'save');
-	register_callback("bab_pm_writetab", 'article' , 'publish');
 }
 
 // ----------------------------------------------------------------------------
 // "Content > Write" tab
 
-function bab_pm_writetab($event, $step)
-	{
-		$bab_pm_PrefsTable = safe_pfx('bab_pm_list_prefs');
-		$options = '';
+function bab_pm_writetab($evt, $stp) {
+	global $app_mode;
 
-		// get available lists to create dropdown menu
+	if ($app_mode === 'async') {
+		return '';
+	}
 
-		$bab_pm_lists = safe_query("select * from $bab_pm_PrefsTable");
-		while($row = @mysql_fetch_row($bab_pm_lists)) {
-			$options .= "<option>$row[1]</option>";
-		}
-		$selection = '<select id="listToEmail" name="listToEmail">' . $options . '</select>';
-		$line = <<<EOL
-<script type="text/javascript">
-function mem_toggleExcerptTinyMCE() {
-	try {
-		hak_toggleEditor('Excerpt');
-	} catch (err) {	}
-}
-</script>
-<h3 class="plain"><a onclick="toggleDisplay('bab_pm'); mem_toggleExcerptTinyMCE(); return false;" href="#bab_pm">Postmaster</a></h3>
+	// Get available subscriber lists to create dropdown
+	$bab_pm_PrefsTable = safe_pfx('bab_pm_list_prefs');
+	$bab_pm_lists = safe_rows('*', $bab_pm_PrefsTable, '1=1');
 
-<div id="bab_pm" class="toggle" style="display: none;">
-	<fieldset id="email-to-subscribers">
-		<legend>Email to subscribers?</legend>
-		<div style="margin-top:5px"><label for="listToEmail" class="listToEmail">Select list:</label> $selection</div>
-		<div style="margin-top:5px">
-			<label for="postmaster-sendFrom" class="sendFrom">From:</label>
-			<input id="postmaster-sendFrom" type="text" name="sendFrom" value="" />
-		</div>
-		<div style="margin-top:5px">
-			<input type="submit" name="save" value="Send to List" class="publish" />
-			&nbsp;&nbsp;
-			<input type="submit" name="save" value="Send to Test" class="publish" />
-		</div>
-	</fieldset>
-</div>
-EOL;
+	$options = array();
+	foreach ($bab_pm_lists as $row) {
+		$options[$row['listName']] = $row['listName'];
+	}
 
-		// for 4.0.4
+	$selection = selectInput('listToEmail', $options, '', false, '', 'listToEmail');
+	$label = gTxt('bab_pm_email_to_subscribers');
+	$content = n. '<label for="listToEmail">'.gTxt('bab_pm_label_list_to_email').'</label>'.
+		n. $selection.
+		br. '<label for="postmaster-sendFrom">'.gTxt('bab_pm_label_send_from').'</label>'.
+		n. fInput('text', 'sendFrom', '', '', '', '', '', '', 'postmaster-sendFrom').
+		br. fInput('button', 'send_to_list', gTxt('bab_pm_send_to_list'), 'bab_pm_button publish').
+		n. fInput('button', 'send_to_test', gTxt('bab_pm_send_to_test'), 'bab_pm_button publish');
 
-		if (is_callable('dom_attach')) {
-			echo dom_attach('article-col-2', $line, $line, 'div');
-			return;
-		}
+	if (function_exists('wrapRegion')) {
+		$out = wrapRegion('bab_postmaster', $content, 'bab_pm', $label, 'bab_pm');
+	} else {
+		$out = n.n.'<fieldset id="bab_pm">'.
+			n. '<legend>'.$label.'</legend>'.
+			n.graf($content).
+			n.'</fieldset>';
+	}
 
-		// for 4.0.3 and earlier
+	$out = escape_js($out);
 
-		$line = addcslashes($line, "\r\n\"\'");
-
-echo $js = <<<eof
-<script language="javascript" type="text/javascript">
-<!--
-
-var table = document.getElementById('articleside');
-var p = document.createElement('div')
-p.innerHTML = '$line'
-table.appendChild(p)
-
-// -->
-</script>
-<noscript>
-<p>$line</p>
-</noscript>
-
-eof;
-
-	} // end bab_pm_writetab
+	echo script_js(<<<EOJS
+		jQuery(function() {
+			jQuery('#dates_group').after('{$out}');
+			jQuery('.bab_pm_button').click(function() {
+				var btn = jQuery(this).attr('name');
+				var lst = jQuery('#listToEmail').val();
+				var snd = jQuery('#postmaster-sendFrom').val();
+				var art = jQuery("input[name='ID']").val();
+				var url = 'index.php?event=postmaster&step=initialize_mail&radio='+btn+'&list='+lst+'&sendFrom='+snd+'&artID='+art;
+				location.href = url;
+			});
+		});
+EOJS
+	);
+	
+} // end bab_pm_writetab
 
 // ----------------------------------------------------------------------------
 // "Admin > Postmaster" tab
@@ -191,7 +169,6 @@ function bab_postmaster($event, $step='')
 
 	$bab_pm_PrefsTable = safe_pfx('bab_pm_list_prefs');
 	$bab_pm_SubscribersTable = safe_pfx('bab_pm_subscribers');
-
 
 	// set up script for hiding add sections
 
@@ -526,7 +503,7 @@ function bab_pm_subscribers()
 		// add a subscriber
 
 		echo '<section role="region" id="bab_pm_add-subscriber" class="txp-details" aria-labelledby="bab_pm_add-subscriber-label">
-		<h3 id="bab_pm_list-of-subscribers-label" class="txp-summary expanded"><a href="#" role="button" class="show" aria-controls="name-of-details" aria-pressed="true">Add Subscriber</a></h3>
+		<h3 id="bab_pm_list-of-subscribers-label" class="lever txp-summary expanded"><a href="#" role="button" class="show" aria-controls="name-of-details" aria-pressed="true">Add Subscriber</a></h3>
 		<div role="group" id="add-subscriber" class="stuff toggle" aria-expanded="true">';
 		bab_pm_makeform();
 
@@ -549,8 +526,8 @@ function bab_pm_subscribers()
 		{
 			$slash_crit = doSlash($crit);
 			$critsql = array(
-				'name' => "(subscriberLastName rlike '$slash_crit' or subscriberFirstName rlike '$slash_crit')",
-				'email'     => "subscriberEmail rlike '$slash_crit'",
+				'name'  => "(subscriberLastName rlike '$slash_crit' or subscriberFirstName rlike '$slash_crit')",
+				'email' => "subscriberEmail rlike '$slash_crit'",
 				'lists' => "T.subscriberLists rlike '$slash_crit'"
 			);
 			if (array_key_exists($method, $critsql))
@@ -619,7 +596,7 @@ EOSQL;
 
 		if ($gesh) {
 			echo '<form action="' . $page_url . '" method="post" name="longform" onsubmit="return verify(\''.gTxt('are_you_sure').'\')">',
-				startTable('list','','txp-list'),
+				startTable('','','txp-list'),
 				'<thead>'
 				.'<tr>',
 				bab_pm_column_head('First Name', 'subscriberFirstName', 'postmaster', 1, ''),
@@ -717,7 +694,7 @@ function bab_pm_lists()
 			echo listlist_searching_form($crit,$method);
 			if ($gesh) {
 				echo '<form action="' . @$page_url . '" method="post" name="longform" onsubmit="return verify(\''.gTxt('are_you_sure').'\')">',
-				startTable('list','','txp-list'),
+				startTable('','','txp-list'),
 				'<thead><tr>',
 					// hCell(gTxt('Edit')),
 					bab_pm_list_column_head('Name', 'listName', 'postmaster', 1, ''),
@@ -996,7 +973,7 @@ function bab_pm_text_input($name, $val, $size = '')
 function bab_pm_prefs()
 {
 	echo n.n.'<form method="post" action="index.php">'.
-		n.n.startTable('list','','txp-list').
+		n.n.startTable('','','txp-list').
     '<thead>'.
 		n.tr(
 			tdcs(
@@ -1082,13 +1059,20 @@ function bab_pm_initialize_mail()
 	// no need to check radio (checked in eop)
 	@session_start();
 
-	global $listAdminEmail, $headers, $mime_boundary, $bab_pm_PrefsTable, $bab_pm_SubscribersTable, $row, $rs; // $row (list), $rs (article) are global for bab_pm_data
+	global $listAdminEmail, $headers, $mime_boundary, $bab_pm_PrefsTable, $bab_pm_SubscribersTable, $row, $rs, $thisarticle; // $row (list), $rs (article) are global for bab_pm_data
+
+	$bab_pm_SubscribersTable = safe_pfx('bab_pm_subscribers');
 
 	$bab_pm_radio = (!empty($_REQUEST['bab_pm_radio'])) ? gps('bab_pm_radio') : gps('radio');
 
-   	$sep = (!is_windows()) ? "\n" : "\r\n"; // is_windows line break
-	include_once txpath.'/publish.php'; // this line is required
+	if ($bab_pm_radio == 'send_to_test')
+		$bab_pm_radio = 2;
+	if ($bab_pm_radio == 'send_to_list')
+		$bab_pm_radio = 1;
 
+  	$sep = (!is_windows()) ? "\n" : "\r\n"; // is_windows line break
+
+	include_once txpath.'/publish.php'; // this line is required
 
 	// get list data (this is so we only perform the query once)
 
@@ -1120,7 +1104,7 @@ function bab_pm_initialize_mail()
 	$newSubject = gps('subjectLine');
 	$subjectLineSource = (!empty($newSubject)) ? 'newSubject' : 'listSubjectLine';
 
-	$sendFrom = gps('sendFrom');
+	$sendFrom = urlencode(gps('sendFrom'));
 	$email_from = empty($sendFrom) ? $listAdminEmail : $sendFrom;
 
 	$subject = parse($$subjectLineSource);
@@ -1147,12 +1131,12 @@ EOSQL;
 	// set header variables, so that only happens once
 
 	$headers = "From: $email_from".
-			   $sep."Reply-To: $email_from".
-               $sep.'X-Mailer: Textpattern/Postmaster'.
-               $sep.'MIME-Version: 1.0'.
-               $sep.'Content-Transfer-Encoding: 8bit'.
-               $sep.'Content-Type: text/plain; charset="UTF-8"'.
-               $sep;
+		$sep."Reply-To: $email_from".
+		$sep.'X-Mailer: Textpattern/Postmaster'.
+		$sep.'MIME-Version: 1.0'.
+		$sep.'Content-Transfer-Encoding: 8bit'.
+		$sep.'Content-Type: text/plain; charset="UTF-8"'.
+		$sep;
 
 	// set mime boundary, so that only happens once
 
@@ -1184,6 +1168,15 @@ eop_form;
 
 	}
 	//echo $template;
+
+	// Scrub the flag column if the request came from the Write panel
+	// A yucky hack, but we don't want to flush the flag if the initialize_mail
+	// event is called manually (e.g. after browser crash or accidentally clicking
+	/// away from the scree) so the mailer can continue where it left off.
+	$referrer = serverSet('HTTP_REFERER');
+	if (strpos($referrer, 'event=article') !== false && strpos($referrer, 'step=edit') !== false) {
+		safe_update($bab_pm_SubscribersTable, 'flag = NULL', '1=1');
+	}
 
 	// send all our initialized to bab_pm_bulk_mail
 
@@ -1271,11 +1264,11 @@ status_report;
 		}
 		if ($bab_pm_radio == 2) { // set $subscribers to be an an array of an array of one
 			$testSubscriber = array(
-	 			'subscriberID'         => '0',
-	 			'subscriberFirstName'	=> 'Test',
-				'subscriberLastName'	=> 'User',
-	 			'subscriberEmail'      => $listAdminEmail,
-	 			'unsubscribeID'	=> '12345'
+	 			'subscriberID'        => '0',
+	 			'subscriberFirstName' => 'Test',
+				'subscriberLastName'  => 'User',
+	 			'subscriberEmail'     => $listAdminEmail,
+	 			'unsubscribeID'       => '12345'
 			);
 			$subscribers = array($testSubscriber);
 		}
@@ -1479,17 +1472,18 @@ yawp;
 
 // ----------------------------------------------------------------------------
 // email on post -- this is called after you click "Save"
-
+// TODO: Remove
 function bab_pm_eop()
 {
 	$bab_pm_PrefsTable = safe_pfx('bab_pm_list_prefs');
 	$bab_pm_SubscribersTable = safe_pfx('bab_pm_subscribers');
 
 	$bab_pm_radio = ps('bab_pm_radio'); // this is whether to mail or not, or test
-	$save = ps('save');
-	if ($save == 'Send to Test')
+	$s2l = ps('send_to_list');
+	$s2t = ps('send_to_test');
+	if ($s2t)
 		$bab_pm_radio = 2;
-	if ($save == 'Send to List')
+	if ($s2l)
 		$bab_pm_radio = 1;
 	$listToEmail = ps('listToEmail'); // this is the list name
 	$artID=ps('ID');
@@ -1658,7 +1652,7 @@ function bab_pm_ifs()
 			}
 			$sql_fields = implode(', ', $sql_fields);
 
-			safe_update('bab_pm_subscribers', $sql_fields, "`subscriberID` = {$editSubscriberId}",1);
+			safe_update('bab_pm_subscribers', $sql_fields, "`subscriberID` = {$editSubscriberId}");
 
 			$lists = ps('editSubscriberLists');
 
@@ -1688,6 +1682,8 @@ $alert = bab_pm_preferences('list_edit');
 			echo "<div class=bab_pm_alerts>$alert</div>";
 		}
 	}
+
+
 # --- END PLUGIN CODE ---
 if (0) {
 ?>
