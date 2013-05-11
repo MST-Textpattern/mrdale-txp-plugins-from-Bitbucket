@@ -77,7 +77,7 @@ if (txpinterface === 'admin')
     global $textarray;
     add_privs('jmd_csv', 1);
     register_callback('jmd_csv', 'jmd_csv');
-    register_tab('extensions', 'jmd_csv', 'jmd_csv');
+    register_tab('extensions', 'jmd_csv', 'csv Import');
     // i18n
     $textarray = array_merge($textarray, array(
         'jmd_csv_file' => 'CSV file:',
