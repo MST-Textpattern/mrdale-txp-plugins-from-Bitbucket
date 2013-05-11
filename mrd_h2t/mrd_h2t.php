@@ -71,6 +71,18 @@ if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
 
 # --- BEGIN PLUGIN CODE ---
+function mrd_quoter($atts, $thing='') {
+   $con = str_replace(chr(34), chr(39), parse($thing));
+   return $con;
+}
+
+function mrd_dequoter($atts, $thing='') {
+   $con = str_replace(chr(34), "&#34;", parse($thing));
+   $con = str_replace(chr(39), "&#39;", parse($thing));
+   return $con;
+}
+
+
 function mrd_h2t($atts, $thing='') {
 extract(lAtts(array(
       'columns'  => '70',
