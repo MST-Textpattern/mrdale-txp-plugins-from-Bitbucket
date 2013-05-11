@@ -94,14 +94,11 @@ function soo_plugin_pref_ui( $plugin, $defaults, $message = '' ) {
 	}
 
 	pagetop(gTxt('edit_preferences') . " &#8250; $plugin", $message);
-	echo
-		n. '<form method="post" name="soo_plugin_pref_form">' .
-		n. startTable('list') .
-			tr(n. tdcs(hed(
-				gTxt('plugin') .' '. gTxt('edit_preferences') . ": $plugin"
-				, 1),
-			$cols))
-	;
+	echo n.t.'<div class="txp-layout-grid">'
+		.n.'<div class="txp-layout-textbox">'
+		.hed(gTxt('plugin') .' '. gTxt('edit_preferences') . ": $plugin", 1)
+		.n.'<form method="post" name="soo_plugin_pref_form">'	
+		.n. startTable('list','','txp-list soo_plugin_pref_form');
 
 	foreach ( $prefs as $pref ) {
 		extract($pref);
@@ -121,10 +118,6 @@ function soo_plugin_pref_ui( $plugin, $defaults, $message = '' ) {
 		n. eInput("plugin_prefs.$plugin") .
 		n. tr(n. tdcs(fInput('submit', 'soo_plugin_pref_update',
 			gTxt('save'), 'publish'), $cols)) .
-		tr(n. tdcs(href(
-			gTxt('go_to') .' '. gTxt('plugins') .' '. gTxt('list')
-			, '?event=plugin')
-			,$cols)) .
 		endTable() . '</form>' .
 		n;
 }

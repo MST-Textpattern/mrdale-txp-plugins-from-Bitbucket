@@ -45,7 +45,7 @@ $plugin['type'] = '1';
 if (!defined('PLUGIN_HAS_PREFS')) define('PLUGIN_HAS_PREFS', 0x0001); // This plugin wants to receive "plugin_prefs.{$plugin['name']}" events
 if (!defined('PLUGIN_LIFECYCLE_NOTIFY')) define('PLUGIN_LIFECYCLE_NOTIFY', 0x0002); // This plugin wants to receive "plugin_lifecycle.{$plugin['name']}" events
 
-$plugin['flags'] = '3';
+$plugin['flags'] = '2';
 
 // Plugin 'textpack' is optional. It provides i18n strings to be used in conjunction with gTxt().
 // Syntax:
@@ -71,7 +71,6 @@ if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
 
 # --- BEGIN PLUGIN CODE ---
-
 /*
 	adi_matrix - Multi-article update tabs
 
@@ -405,12 +404,12 @@ height: "400",
 	// plugin options
 	$adi_matrix_plugin_status = fetch('status','txp_plugin','name','adi_matrix',$adi_matrix_debug);
 	if ($adi_matrix_plugin_status) { // proper install - options under Plugins tab
-		add_privs('plugin_prefs.adi_matrix'); // defaults to priv '1' only
+		add_privs('plugin_prefs.adi_matrix','1,2'); // defaults to priv '1' only
 		register_callback('adi_matrix_options','plugin_prefs.adi_matrix');
 	}
 	else { // txpdev - options under Extensions tab
 		add_privs('adi_matrix_options');
-		register_tab('extensions','adi_matrix_options','adi_matrix options');
+		register_tab('extensions','adi_matrix_options','Matrix Options');
 		register_callback('adi_matrix_options','adi_matrix_options');
 	}
 
@@ -2710,13 +2709,13 @@ function adi_matrix_admin_table_head($adi_matrix_cfs) {
 
 	// Custom field headings
 	$data_span = 2; // [status/keywords] plus [custom fields]
-	return tr(
+	return '<thead>'.tr(
 		hcell(adi_matrix_gtxt('adi_matrix'))
 		.hcell() // spacer for View link
 		.hcell(adi_matrix_gtxt('adi_article_selection'))
 		.hcell(adi_matrix_gtxt('adi_article_data'),'',' colspan="'.$data_span.'"')
 		.hcell('','',' class="adi_matrix_noborder"') // spacer for Delete button
-	);
+	).'</thead>';
 }
 
 function adi_matrix_admin_table($matrix_list,$matrix_cfs) {
@@ -3284,7 +3283,6 @@ function adi_matrix_options($event,$step) {
 	}
 
 }
-
 # --- END PLUGIN CODE ---
 if (0) {
 ?>

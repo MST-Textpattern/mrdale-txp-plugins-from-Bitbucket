@@ -45,7 +45,7 @@ $plugin['type'] = '3';
 if (!defined('PLUGIN_HAS_PREFS')) define('PLUGIN_HAS_PREFS', 0x0001); // This plugin wants to receive "plugin_prefs.{$plugin['name']}" events
 if (!defined('PLUGIN_LIFECYCLE_NOTIFY')) define('PLUGIN_LIFECYCLE_NOTIFY', 0x0002); // This plugin wants to receive "plugin_lifecycle.{$plugin['name']}" events
 
-$plugin['flags'] = '3';
+$plugin['flags'] = '2';
 
 // Plugin 'textpack' is optional. It provides i18n strings to be used in conjunction with gTxt().
 // Syntax:
@@ -71,7 +71,6 @@ if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
 
 # --- BEGIN PLUGIN CODE ---
-
 /*
 	adi_recent_tab - Recent Items Tab
 
@@ -116,7 +115,7 @@ if (@txpinterface == 'admin') {
 	}
 	else { // txpdev - options under Extensions tab
 		add_privs('adi_recent_tab_options','1,2,6');
-		register_tab('extensions','adi_recent_tab_options','adi_recent_tab options');
+		register_tab('extensions','adi_recent_tab_options','Recent Items Options');
 		register_callback('adi_recent_tab_options','adi_recent_tab_options');
 	}
 
@@ -926,7 +925,6 @@ function adi_recent_tab_db_dump($table='adi_recent_tab') {
 	$out .= '</table><br/>';
 	return $out;
 }
-
 # --- END PLUGIN CODE ---
 if (0) {
 ?>

@@ -86,7 +86,7 @@ if (@txpinterface == 'admin') {
     register_callback("hak_txpimage", "hak_txpimage");
     register_callback("hak_txpcatselect", "hak_txpcatselect");
 
-    register_tab('extensions', 'hak_tinymce_prefs', 'hak_tinymce');
+    register_tab('extensions', 'hak_tinymce_prefs', 'TinyMCE');
     register_callback(array('hak_tinymce','prefs'), 'hak_tinymce_prefs');
     register_callback(array('hak_tinymce','inject_toggle'), 'article_ui', 'extend_col_1');
     register_callback(array("hak_tinymce","inject_js"), "article_ui", "extend_col_1");
@@ -194,7 +194,7 @@ class hak_tinymce {
     }
 
      function prefs($event, $step) {
-        pagetop('hak_tinymce '.gTxt('preferences'), ($step == 'update' ? gTxt('preferences_saved') : ''));
+        pagetop('TinyMCE '.gTxt('preferences'), ($step == 'update' ? gTxt('preferences_saved') : ''));
 
         if ($step == 'install') {
             // Install the preferences table.
@@ -236,8 +236,12 @@ class hak_tinymce {
 
         if (hak_tinymce::check_install()) {
             extract(hak_tinymce::getPrefs());
-            echo n.t.'<div style="margin: auto; width:40%;">'.
-                n.t.t.hed('hak_tinymce '.gTxt('Preferences'), '1').
+            echo n.t.'<div class="txp-layout-grid">'
+            	.n.'<div class="txp-layout-textbox">'.
+                n.t.t.hed('TinyMCE '.gTxt('Preferences'), '1').
+				'<section role="region" id="hak_tinymce_prefs" class="txp-details" aria-labelledby="hak_tinymce_prefs-label">'.n.
+				'<h3 id="hak_tinymce_prefs-label">TinyMCE Configuration</h3>'.n.
+				'<div role="group">'.n.
                 n.n.form(
                          n.eInput('hak_tinymce_prefs').
                          n.sInput('update').
@@ -280,30 +284,40 @@ class hak_tinymce {
                          n.graf(hak_tinymce::mce_gTxt('hak_tinymce_compressor_init').br.
                                 tag(tag("(".hak_tinymce::mce_gTxt('compressor_line_end').")","em"),"small").
                                 n.href(hak_tinymce::mce_gTxt('documentation'),"http://wiki.moxiecode.com/index.php/TinyMCE:Compressor/PHP").br.
-                                n.text_area('hak_tinymce_compressor_init',200,400,$compressor_init)
+                                n.text_area('hak_tinymce_compressor_init',200,100,$compressor_init)
                                 ).
                          n.n.fInput('submit', 'update', 'Update', 'smallerbox')
                          ).
-                '</div>';
-			echo n.t.'<div style="margin: 60px auto 0; width:40%;">'.
-				n.hed(hak_tinymce::mce_gTxt('uninstall'), '1').
+                             '</div>'.n.
+					'</section>'.n;
+			echo n.t.'<section role="region" id="hak_tinymce_uninstall" class="txp-details" aria-labelledby="hak_tinymce_uninstall-label">'.n.
+				'<h3 id="hak_tinymce_uninstall-label">TinyMCE Uninstall</h3>'.n.
+				'<div role="group">'.n.
 				n.t.t.graf(hak_tinymce::mce_gTxt('uninstall_message')).
 				n.n.form(
                          n.eInput('hak_tinymce_prefs').
                          n.sInput('uninstall').
                          n.n.fInput('submit', 'uninstall', 'Uninstall ', 'smallerbox'),"","confirm('".hak_tinymce::mce_gTxt('uninstall_confirm')."')"
                          ).
-				'</div>';
+					  '</div>'.n.
+					'</section>'.n.
+				'</div></div>';
         } else {
-            echo n.t.'<div style="margin: auto; width:40%;">'.
-                n.t.t.hed('hak_tinymce '.gTxt('Preferences'), '1').
+            echo n.t.'<div class="txp-layout-grid">'.
+            	n.'<div class="txp-layout-textbox">'.
+            	n.t.t.hed('TinyMCE '.gTxt('Preferences'), '1').
+            	'<section role="region" id="hak_tinymce_install" class="txp-details" aria-labelledby="hak_tinymce_install-label">'.n.
+				'<h3 id="hak_tinymce_install-label">TinyMCE Install Preferences</h3>'.n.
+				'<div role="group">'.n.
                 n.graf(hak_tinymce::mce_gTxt('install_message')).
                 n.n.form(
                          n.eInput('hak_tinymce_prefs').
                          n.sInput('install').
                          n.n.fInput('submit', 'install', 'Install ', 'smallerbox')
                          ).
-                '</div>';
+					  '</div>'.n.
+					'</section>'.n.
+                '</div></div>';
         }
     }
 

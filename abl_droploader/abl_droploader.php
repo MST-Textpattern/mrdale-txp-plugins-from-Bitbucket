@@ -54,17 +54,30 @@ $plugin['flags'] = '3';
 // #@language ISO-LANGUAGE-CODE
 // abc_string_name => Localized String
 
-/** Uncomment me, if you need a textpack
 $plugin['textpack'] = <<< EOT
 #@admin
-#@language en-gb
-abc_sample_string => Sample String
-abc_one_more => One more
-#@language de-de
-abc_sample_string => Beispieltext
-abc_one_more => Noch einer
+#@language en-us
+abl_droploader_open => Upload Images
+abl_droploader_open_title => Open drag & drop multiple image uploader
+abl_droploader_close => &#x00d7;
+abl_droploader_close_title => Close DropLoader
+abl_droploader_error_method => Method {{method}} does not exist in abl.droploader-app.js.
+abl_droploader_info_text => Drop files here\\n\\nor click to select files
+abl_droploader_err_invalid_filetype => Cannot upload {{filename}}. Only images are allowed (jpg, jpeg, gif, png)!
+abl_droploader_err_browser_not_supported => Your browser does not support HTML5 file uploads!
+abl_droploader_err_too_many_files => Too many files!\\nPlease select {{maxfiles}} at most!
+abl_droploader_err_file_too_large => {{filename}} is too large!
+abl_droploader_all_files_uploaded => {{filecount}} files uploaded.
+abl_droploader_no_files_uploaded => \\nNo files where uploaded.
+abl_droploader_some_files_uploaded => \\n{{uploaded_files}} of {{filecount}} files uploaded.
+abl_droploader_prefs_image_max_upload_count => Maximum file count of image uploads
+abl_droploader_prefs_file_max_upload_count => Maximum file count of file uploads
+abl_droploader_prefs_reload_image_tab => Images-Tab: Close Droploader and reload image list after upload
+abl_droploader_prefs_use_default_stylesheet => Use default styles
+abl_droploader_prefs_custom_stylesheet => Custom stylesheet (path/filename)
+abl_droploader_prefs_article_image_fields => Article-image field(s) (comma separated list of CSS fieldnames, use #custom-n for custom field names)
 EOT;
-**/
+
 // End of textpack
 
 if (!defined('txpinterface'))
@@ -159,7 +172,7 @@ if (@txpinterface == 'admin') {
 			$msg = 'Please install <em>soo_plugin_pref</em> to edit preferences (Default preferences apply).';
 			pagetop(gTxt('edit_preferences') . " &#8250; abl_droploader", $msg);
 			$default_prefs = abl_droploader_defaults();
-			$html = '<table id="list" align="center" border="0" cellpadding="3" cellspacing="0">
+			$html = '<table id="list" class="txp-list" align="center" border="0" cellpadding="3" cellspacing="0">
 <thead>
 <tr>
 <th colspan="2"><h1>DropLoader default preferences</h1></th>

@@ -37,7 +37,7 @@ $plugin['order'] = '5';
 // 3 = admin               : only on the admin side (no AJAX)
 // 4 = admin+ajax          : only on the admin side (AJAX supported)
 // 5 = public+admin+ajax   : on both the public and admin side (AJAX supported)
-$plugin['type'] = '3';
+$plugin['type'] = '2';
 
 // Plugin "flags" signal the presence of optional capabilities to the core plugin loader.
 // Use an appropriately OR-ed combination of these flags.
@@ -45,7 +45,7 @@ $plugin['type'] = '3';
 if (!defined('PLUGIN_HAS_PREFS')) define('PLUGIN_HAS_PREFS', 0x0001); // This plugin wants to receive "plugin_prefs.{$plugin['name']}" events
 if (!defined('PLUGIN_LIFECYCLE_NOTIFY')) define('PLUGIN_LIFECYCLE_NOTIFY', 0x0002); // This plugin wants to receive "plugin_lifecycle.{$plugin['name']}" events
 
-$plugin['flags'] = '3';
+$plugin['flags'] = '2';
 
 // Plugin 'textpack' is optional. It provides i18n strings to be used in conjunction with gTxt().
 // Syntax:
@@ -71,7 +71,6 @@ if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
 
 # --- BEGIN PLUGIN CODE ---
-
 /*
 	adi_form_links - Admin-side form links
 
@@ -108,7 +107,7 @@ if (@txpinterface == 'admin') {
 	}
 	else { // txpdev - options under Extensions tab
 		add_privs('adi_form_links_options','1,2,6');
-		register_tab('extensions','adi_form_links_options','adi_form_links options');
+		register_tab('extensions','adi_form_links_options','Form Link Options');
 		register_callback('adi_form_links_options','adi_form_links_options');
 	}
 
@@ -225,7 +224,7 @@ function adi_form_links_options($event,$step) {
 
 	// options
 	echo tag(
-		tag('adi_form_links '.gTxt('plugin_prefs'),'h2')
+		tag('Form Links '.gTxt('plugin_prefs'),'h2')
  		// preferences
  	  	.form(
 			tag(gTxt('edit_preferences'),'h3')
@@ -553,7 +552,6 @@ function adi_form_links_markup($matches) {
 			,' id="adi_form_links"'
 		);
 }
-
 # --- END PLUGIN CODE ---
 if (0) {
 ?>
