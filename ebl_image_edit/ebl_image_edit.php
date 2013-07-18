@@ -17,7 +17,7 @@ $plugin['name'] = 'ebl-image-edit';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '2.1';
+$plugin['version'] = '2.2';
 $plugin['author'] = 'Eric Limegrover + mrdale';
 $plugin['author_uri'] = 'http://www.syserror.net/';
 $plugin['description'] = 'Advanced Image Editing Plugin for Textpattern';
@@ -418,6 +418,13 @@ function addCrop() {
 		window.myCrop = $.Jcrop('#mainImg',{ 
 			onSelect: showCoords,
 			onChange: showCoords,
+			onDblClick: function(){
+				if($('#eblcropctrl').is(':visible')){
+					$('#eblimgcrop').click();
+				}else if($('#ebltmbctrl').is(':visible')){
+					$('#ebltmbcrop').click();
+				}
+			},
 			aspectRatio: aspectratio
 		});
 	myCrop.setSelect([ 0, 0, 100, 150 ]);
@@ -645,6 +652,10 @@ function addCrop() {
 		$('#eblrotatelnk, #eblresizelnk,#ebltmblnk,#eblcroplnk').css('font-weight','normal');
 		$('#eblrotatectrl,#eblcropctrl,#ebltmbctrl,#eblresize,#eblrotatectrl,#eblcropdata').hide();
 		$('#eblbackupimg').toggle();
+
+		removeCrop();
+		window.myCrop = ' ';
+		window.crop = false;
 	});
 	
 	$('#eblbackup').click(function () {
@@ -675,9 +686,9 @@ function addCrop() {
 			success: function(html){
 				if(html.match(/success/)) {
 					$('#eblimgprocess').hide();
-					alert("image restored");
 					var x = $('#imgDiv');
 					x.empty().append('<img src="$imgsrc?' + rand +'" id="mainImg" />');
+					alert("image restored");
 				} else {
 					$('#eblimgprocess').hide();
 					alert("Error : " + html);
@@ -981,9 +992,10 @@ function ebl_img_edit ($id, $direction, $action)
 	if($action != 'thumbnail') 
 	{
 		list ($width,$height) = getimagesize($imagedir . $filename);
-		$rs = safe_update('txp_image', "w = '".$width."', h = '".$height."'", "id = $id");
+		$rs = safe_update('txp_image', "h = '$height', w = '$width'", "id = $id");
 	} else {
-		$rs = safe_update('txp_image', "thumbnail = '1'", "id = $id");
+		list ($width,$height) = getimagesize($imagedir . $filename);
+		$rs = safe_update('txp_image', "thumb_h = '$height', thumb_w = '$width', thumbnail = '1'", "id = $id");
 	}
 	
 	echo ($fileresult && $rs) ? "success" : 'ERROR ';
