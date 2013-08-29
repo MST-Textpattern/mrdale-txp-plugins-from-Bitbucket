@@ -1197,7 +1197,7 @@ function glz_custom_fields_css_js() {
   global $glz_notice, $date_picker, $time_picker, $prefs;
 
   // here come our custom stylesheetz
-  $css = '<link rel="stylesheet" type="text/css" media="all" href="http://'.$prefs['siteurl'].'/plugins/glz_custom_fields/glz_custom_fields.css">'.n;
+  $css = '<link rel="stylesheet" type="text/css" media="all" href="//'.$prefs['siteurl'].'/plugins/glz_custom_fields/glz_custom_fields.css">'.n;
   // and here come our javascriptz
   $js = '';
   if ( $date_picker ) {
@@ -1215,7 +1215,7 @@ $(function() {
       Date.fullYearStart = '19';
       $(".date-picker").datePicker({startDate:'{$prefs['datepicker_start_date']}'});
     } catch(err) {
-      $('#messagepane').html('<a href="http://{$prefs['siteurl']}/textpattern/?event=plugin_prefs.glz_custom_fields">Fix the DatePicker jQuery plugin</a>');
+      $('#messagepane').html('<a href="//{$prefs['siteurl']}/textpattern/?event=plugin_prefs.glz_custom_fields">Fix the DatePicker jQuery plugin</a>');
     }
   }
 });
@@ -1237,14 +1237,14 @@ $(function() {
         show24Hours: {$prefs['timepicker_show_24']}
       });
     } catch(err) {
-      $('#messagepane').html('<a href="http://{$prefs['siteurl']}/textpattern/?event=plugin_prefs.glz_custom_fields">Fix the TimePicker jQuery plugin</a>');
+      $('#messagepane').html('<a href="//{$prefs['siteurl']}/textpattern/?event=plugin_prefs.glz_custom_fields">Fix the TimePicker jQuery plugin</a>');
     }
   }
 });
 </script>
 EOF;
   }
-  $js .= '<script type="text/javascript" src="http://'.$prefs['siteurl'].'/plugins/glz_custom_fields/glz_custom_fields.js"></script>';
+  $js .= '<script type="text/javascript" src="//'.$prefs['siteurl'].'/plugins/glz_custom_fields/glz_custom_fields.js"></script>';
 
   // displays the notices we have gathered throughout the entire plugin
   if ( count($glz_notice) > 0 ) {
