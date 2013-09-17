@@ -187,7 +187,7 @@ function rvm_css_save()
       chmod($file.'.less', 0644);
 
       $less = new lessc();
-      $less->setFormatter('compressed');
+      //$less->setFormatter('compressed');
       $less->setImportDir($path_to_site.'/'.$rvm_css_dir.'/');
 
       try
