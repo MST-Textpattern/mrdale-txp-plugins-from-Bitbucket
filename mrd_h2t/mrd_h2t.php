@@ -72,7 +72,7 @@ if (!defined('txpinterface'))
 
 # --- BEGIN PLUGIN CODE ---
 function mrd_strip($atts, $thing='') {
-	 $con=preg_replace("/\s+/", " ", $thing);
+	 $con=preg_replace("/\s+/", " ", parse($thing));
    return $con;
 }
 
