@@ -72,7 +72,7 @@ if (!defined('txpinterface'))
 
 # --- BEGIN PLUGIN CODE ---
 function mrd_strip($atts, $thing='') {
-	 $con=preg_replace ("/\015\012|\015|\012/", PHP_EOL, $thing);
+	 $con=preg_replace ("/\015\012|\015|\012/", '', $thing);
    return $con;
 }
 
