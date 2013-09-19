@@ -71,6 +71,11 @@ if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
 
 # --- BEGIN PLUGIN CODE ---
+function mrd_strip($atts, $thing='') {
+	 $con=preg_replace ("/\015\012|\015|\012/", PHP_EOL, $thing);
+   return $con;
+}
+
 function mrd_quoter($atts, $thing='') {
    $con = str_replace(chr(34), chr(39), parse($thing));
    return $con;
