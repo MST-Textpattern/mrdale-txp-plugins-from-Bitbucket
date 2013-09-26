@@ -71,6 +71,11 @@ if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
 
 # --- BEGIN PLUGIN CODE ---
+function mrd_stripslash($atts, $thing='') {
+	 $con=stripslashes(parse($thing));
+   return $con;
+}
+
 function mrd_strip($atts, $thing='') {
 	 $con=preg_replace("/\s+/", " ", parse($thing));
    return $con;
