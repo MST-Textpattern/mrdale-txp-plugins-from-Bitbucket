@@ -54,114 +54,18 @@ $plugin['flags'] = '3';
 // #@language ISO-LANGUAGE-CODE
 // abc_string_name => Localized String
 
-$plugin['textpack'] = <<<EOT
-#@ied_plugin
-ied_plugin_any => Any
-ied_plugin_auto_enable => Auto-enable plugins on install
-ied_plugin_cacheplugs_legend => Plugins in cache folder
-ied_plugin_cache_not_set => Advanced pref "plugin cache directory" not defined
-ied_plugin_check_type => Check your plugin type!
-ied_plugin_choose_file => Please choose a file first
-ied_plugin_code_dist => Plugin code for distribution
-ied_plugin_code_legend => Plugin code
-ied_plugin_code_save => Save code
-ied_plugin_code_saved => Code saved
-ied_plugin_code_saved_fail => Code saving failed
-ied_plugin_compress => Zip
-ied_plugin_cpanel_legend => Installation
-ied_plugin_create_new => Create new plugin
-ied_plugin_dbplugs_legend => Plugins in database
-ied_plugin_docs => Docs
-ied_plugin_docs_legend => Plugin help
-ied_plugin_edit => Edit: {name} v{version}
-ied_plugin_editing => Editing {name} in Plugin Composer
-ied_plugin_editor => Plugin editor
-ied_plugin_editor_options => Plugin editor configuration options
-ied_plugin_editor_path => Plugin editor URL
-ied_plugin_editor_width => Plugin editor width
-ied_plugin_edit_new => Edit your new plugin
-ied_plugin_enable => Enabled
-ied_plugin_export => Export as {name}
-ied_plugin_export_textpack => Export textpack(s)
-ied_plugin_export_zip => Export as {name} (compressed)
-ied_plugin_flags => Flags
-ied_plugin_flag_has_prefs => Has prefs
-ied_plugin_flag_lifecycle_notify => Event notify
-ied_plugin_fn_not_exist => (the function is probably javascript or mangled PHP)
-ied_plugin_help_editor => Help editor
-ied_plugin_help_editor_options => Help editor configuration options
-ied_plugin_help_editor_path => Help editor URL
-ied_plugin_help_not_available => Plugin help not available
-ied_plugin_if_el_dist => Code for distribution
-ied_plugin_if_el_style => Help style block
-ied_plugin_if_settings => Interface settings
-ied_plugin_install_textpack => Install file's Textpack
-ied_plugin_install_txt => Install from .txt file
-ied_plugin_interface_elems => Optional interface elements
-ied_plugin_jump_to_line => Jump to line:
-ied_plugin_langs_all => All available
-ied_plugin_langs_installed => Only installed
-ied_plugin_lang_choose => Textpack language list
-ied_plugin_lang_default => Default textpack language
-ied_plugin_lbl_composer => Plugin composer
-ied_plugin_lbl_lc_delete => Delete
-ied_plugin_lbl_lc_disable => Disable
-ied_plugin_lbl_lc_disdel => Disable+Delete
-ied_plugin_lbl_lc_enable => Enable
-ied_plugin_lbl_lc_instable => Install+Enable
-ied_plugin_lbl_lc_install => Install
-ied_plugin_lbl_op_code_first => Code first
-ied_plugin_lbl_op_help_first => Help first
-ied_plugin_lbl_setup => Plugin composer setup
-ied_plugin_lc_fired => Lifecycle event {event} fired for {name}
-ied_plugin_lifecycle => Fire lifecycle event
-ied_plugin_lifecycle_options => Perform lifecycle actions on
-ied_plugin_load => Load
-ied_plugin_load_order => Load order
-ied_plugin_load_order_help => (1=first > 5=normal > 9=last)
-ied_plugin_meta_legend => Meta information
-ied_plugin_msgpop_lbl => phpdoc block
-ied_plugin_name_first => Please name the plugin before creating it
-ied_plugin_output_order => PHP export order
-ied_plugin_output_sfile => Export plugin filename format
-ied_plugin_output_sfilec => Export compressed filename format
-ied_plugin_output_sfilep => Plugin template filename format
-ied_plugin_output_sfilet => Textpack filename format
-ied_plugin_output_tmpcache => Cache Textiled help path
-ied_plugin_php_doc => Make phpdoc
-ied_plugin_prefs => Preferences
-ied_plugin_prefs_deleted => Preferences deleted
-ied_plugin_renamed => (renamed)
-ied_plugin_rename_failed => (rename failed)
-ied_plugin_rename_file => Rename file
-ied_plugin_restored => Plugin {name} restored.
-ied_plugin_restore_help => Roll back the plugin code to the most recent restore point
-ied_plugin_restore_point => Restore point
-ied_plugin_restore_verify => Are you sure you want to rollback the {name} source code to its last restore point?
-ied_plugin_run_from => Plugins running from cache
-ied_plugin_run_install => Perform post-install actions
-ied_plugin_same => Same
-ied_plugin_save_as => Save as {name}
-ied_plugin_setup => Setup
-ied_plugin_syntax_check => Syntax check on code save
-ied_plugin_syntax_err => Syntax error
-ied_plugin_toggle => Toggle
-ied_plugin_tp_legend => Textpack strings
-ied_plugin_tp_populate => Load strings from function
-ied_plugin_tp_prefix => Textpack prefix
-ied_plugin_type => Plugin type
-ied_plugin_type_0 => Public
-ied_plugin_type_1 => Admin + Public
-ied_plugin_type_2 => Library
-ied_plugin_type_3 => Admin only
-ied_plugin_type_4 => Admin (+AJAX)
-ied_plugin_type_5 => Admin + Public (+AJAX)
-ied_plugin_updated => Plugin {name} updated
-ied_plugin_uploaded => Plugin {name} uploaded
-ied_plugin_upload_php => Upload plugin
-ied_plugin_utils_legend => Distribution (only for use after saving)
-ied_plugin_view_help => Help: {name}
+/** Uncomment me, if you need a textpack
+$plugin['textpack'] = <<< EOT
+#@admin
+#@language en-gb
+abc_sample_string => Sample String
+abc_one_more => One more
+#@language de-de
+abc_sample_string => Beispieltext
+abc_one_more => Noch einer
 EOT;
+**/
+// End of textpack
 
 if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
@@ -650,7 +554,7 @@ function ied_plugin_multi_edit() {
 
 				safe_update('txp_plugin', 'status = '.$newstat, $where);
 				break;
-	
+
 			case 'changeorder':
 				$order = min(max(intval(ps('order')), 1), 9);
 				safe_update('txp_plugin', 'load_order = '.$order, $where);
@@ -2181,6 +2085,14 @@ function ied_plugin_read_file($filepath) {
 				$parts[1] = "'".$parts[1]."'";
 			}
 			preg_match("/.*'(.*)'.*/", $parts[1], $val); // Remove anything outside the quotes (e.g. $revision)
+			if (empty($val)) {
+				// Try unquoted - may be a constant
+				preg_match("/(.*)/", $parts[1], $val);
+				if (strtoupper($val[1]) == $val[1]) {
+					// It's a constant so get its value
+					$val[1] = constant($val[1]);
+				}
+			}
 
 			if ($var[1] == 'revision' && isset($val[1]) && !empty($val[1])) {
 				$revparts = explode(' ', trim($val[1], '$ '));
