@@ -100,7 +100,7 @@ extract(lAtts(array(
    ),$atts));
 
   $thing = parse($thing);
-  $h2t =& new html2text($thing);
+  $h2t = new html2text($thing);
   $h2t->set_base_url('http://'.$baseurl);
   $h2t->width = $columns;
   return $h2t->get_text();
