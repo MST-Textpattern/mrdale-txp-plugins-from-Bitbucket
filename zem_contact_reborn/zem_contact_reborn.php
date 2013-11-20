@@ -17,10 +17,10 @@ $plugin['name'] = 'zem_contact_reborn';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.6.1hak';
+$plugin['version'] = '4.5.0.0';
 $plugin['author'] = 'TXP Community';
 $plugin['author_uri'] = 'http://forum.textpattern.com/viewtopic.php?id=23728';
-$plugin['description'] = 'Modified Form mailer for Textpattern';
+$plugin['description'] = 'Form mailer for Textpattern';
 
 // Plugin load order:
 // The default value of 5 would fit most plugins, while for instance comment
@@ -54,24 +54,44 @@ $plugin['flags'] = '0';
 // #@language ISO-LANGUAGE-CODE
 // abc_string_name => Localized String
 
-/** Uncomment me, if you need a textpack
-$plugin['textpack'] = <<< EOT
-#@admin
-#@language en-gb
-abc_sample_string => Sample String
-abc_one_more => One more
-#@language de-de
-abc_sample_string => Beispieltext
-abc_one_more => Noch einer
+$plugin['textpack'] = <<<EOT
+#@public
+zem_contact_checkbox => Checkbox
+zem_contact_contact => Contact
+zem_contact_email => Email
+zem_contact_email_subject => {site} > Inquiry
+zem_contact_email_thanks => Thank you, your message has been sent.
+zem_contact_field_missing => Required field, &#8220;<strong>{field}</strong>&#8221;, is missing.
+zem_contact_form_expired => The form has expired, please try again.
+zem_contact_form_used => The form was already submitted, please fill out a new form.
+zem_contact_general_inquiry => General inquiry
+zem_contact_invalid_email => &#8220;<strong>{email}</strong>&#8221; is not a valid email address.
+zem_contact_invalid_host => &#8220;<strong>{host}</strong>&#8221; is not a valid email host.
+zem_contact_invalid_utf8 => &#8220;<strong>{field}</strong>&#8221; contains invalid UTF-8 characters.
+zem_contact_invalid_value => Invalid value for &#8220;<strong>{field}</strong>&#8221;, &#8220;<strong>{value}</strong>&#8221; is not one of the available options.
+zem_contact_mail_sorry => Sorry, unable to send email.
+zem_contact_maxval_warning => &#8220;<strong>{field}</strong>&#8221; must not exceed {value}.
+zem_contact_max_warning => &#8220;<strong>{field}</strong>&#8221; must not contain more than {value} characters.
+zem_contact_message => Message
+zem_contact_minval_warning => &#8220;<strong>{field}</strong>&#8221; must be at least {value}.
+zem_contact_min_warning => &#8220;<strong>{field}</strong>&#8221; must contain at least {value} characters.
+zem_contact_name => Name
+zem_contact_option => Option
+zem_contact_radio => Radio
+zem_contact_recipient => Recipient
+zem_contact_refresh => Follow this link if the page does not refresh automatically.
+zem_contact_secret => Secret
+zem_contact_send => Send
+zem_contact_send_article => Send article
+zem_contact_spam => We do not accept spam, thank you!
+zem_contact_text => Text
+zem_contact_to_missing => &#8220;<strong>To</strong>&#8221; email address is missing.
 EOT;
-**/
-// End of textpack
 
 if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
 
 # --- BEGIN PLUGIN CODE ---
-// This version includes manfre's hacks for skipping unselected products
 function zem_contact($atts, $thing = '')
 {
 	global $sitename, $prefs, $production_status, $zem_contact_from,
@@ -79,26 +99,27 @@ function zem_contact($atts, $thing = '')
 		$zem_contact_form, $zem_contact_labels, $zem_contact_values, $zem_contact_encrypt, $enable_msg_callback;
 
 	extract(zem_contact_lAtts(array(
-		'copysender' => 0,
-        'alsocopy' => '',
-		'form'		=> '',
-        'copy_form' => '',
-        'encrypt' => 0,
-		'from'		=> '',
-		'from_form'	=> '',
-		'label'		=> zem_contact_gTxt('contact'),
-		'redirect'	=> '',
-		'show_error'	=> 1,
-		'show_input'	=> 1,
-		'send_article'	=> 0,
-		'subject'	=> zem_contact_gTxt('email_subject', html_entity_decode($sitename,ENT_QUOTES)),
-		'subject_form'	=> '',
-		'message_form'	=> '',
+		'class'        => 'zemContactForm',
+		'copysender'   => 0,
+    'alsocopy'     => '',
+		'form'		     => '',
+    'copy_form'    => '',
+    'encrypt' => 0,
+    'from'         => '',
+		'from_form'    => '',
+		'label'        => gTxt('zem_contact_contact'),
+		'redirect'     => '',
+		'show_error'   => 1,
+		'show_input'   => 1,
+		'send_article' => 0,
+		'subject'      => gTxt('zem_contact_email_subject', array('{site}' => html_entity_decode($sitename,ENT_QUOTES))),
+		'subject_form' => '',
+    'message_form' => '',
 		'html_message_form'	=> '',
-		'to'		=> '',
-		'to_form'	=> '',
-		'thanks'	=> graf(zem_contact_gTxt('email_thanks')),
-		'thanks_form'	=> '',
+		'to'           => '',
+		'to_form'      => '',
+		'thanks'       => graf(gTxt('zem_contact_email_thanks')),
+		'thanks_form'  => '',
 		'enable_msg_callback' => 0
 	), $atts));
 
@@ -110,7 +131,7 @@ function zem_contact($atts, $thing = '')
 	if (!is_callable('mail'))
 	{
 		return ($production_status == 'live') ?
-			zem_contact_gTxt('mail_sorry') :
+			gTxt('zem_contact_mail_sorry') :
 			gTxt('warn_mail_unavailable');
 	}
 
@@ -133,7 +154,7 @@ function zem_contact($atts, $thing = '')
 			if ($rs['used'])
 			{
 				unset($zem_contact_error);
-				$zem_contact_error[] = zem_contact_gTxt('form_used');
+				$zem_contact_error[] = gTxt('zem_contact_form_used');
 				$renonce = true;
 				$_POST = array();
 				$_POST['zem_contact_submit'] = TRUE;
@@ -143,7 +164,7 @@ function zem_contact($atts, $thing = '')
 		}
 		else
 		{
-			$zem_contact_error[] = zem_contact_gTxt('form_expired');
+			$zem_contact_error[] = gTxt('zem_contact_form_expired');
 			$renonce = true;
 		}
 	}
@@ -164,9 +185,9 @@ function zem_contact($atts, $thing = '')
 	if (empty($form))
 	{
 		$form = '
-<txp:zem_contact_text label="'.zem_contact_gTxt('name').'" /><br />
+<txp:zem_contact_text label="'.gTxt('zem_contact_name').'" /><br />
 <txp:zem_contact_email /><br />'.
-($send_article ? '<txp:zem_contact_email send_article="1" label="'.zem_contact_gTxt('recipient').'" /><br />' : '').
+($send_article ? '<txp:zem_contact_email send_article="1" label="'.gTxt('zem_contact_recipient').'" /><br />' : '').
 '<txp:zem_contact_textarea /><br />
 <txp:zem_contact_submit />
 ';
@@ -183,7 +204,7 @@ function zem_contact($atts, $thing = '')
 
 	if (!$to and !$send_article)
 	{
-		return zem_contact_gTxt('to_missing');
+		return gTxt('zem_contact_to_missing');
 	}
 
 	$out = '';
@@ -216,7 +237,7 @@ function zem_contact($atts, $thing = '')
 		$evaluation =& get_zemcontact_evaluator();
 		$clean = $evaluation->get_zemcontact_status();
 		if ($clean != 0) {
-			return zem_contact_gTxt('spam');
+			return gTxt('zem_contact_spam');
 		}
 
 		if ($from_form)
@@ -233,6 +254,12 @@ function zem_contact($atts, $thing = '')
 
 		$msg = array();
 
+		foreach ($zem_contact_labels as $name => $label)
+		{
+			if (!trim($zem_contact_values[$name])) continue;
+			$msg[] = $label.': '.$zem_contact_values[$name];
+		}
+
 		if ($send_article)
 		{
 			global $thisarticle;
@@ -245,12 +272,12 @@ function zem_contact($atts, $thing = '')
 			}
 			else
 			{
-				$r_ar = array('â€˜', 'â€™', 'â€œ', 'â€', 'â€™', '\'', '?', 'â€¦', 'â€“', 'â€”', 'Ã—', 'â„¢', 'Â®', 'Â©', '<', '>', '"', '&', '&', ' ', "\n<p");
+				$r_ar = array('‘', '’', '“', '”', '’', '?', '?', '…', '–', '—', '×', '™', '®', '©', '<', '>', '"', '&', '&', ' ', "\n<p");
 			}
 			$msg[] = trim(strip_tags(str_replace($s_ar,$r_ar,(trim(strip_tags($thisarticle['excerpt'])) ? $thisarticle['excerpt'] : $thisarticle['body']))));
 			if (empty($zem_contact_recipient))
 			{
-				return zem_contact_gTxt('field_missing', zem_contact_gTxt('recipient'));
+				return gTxt('zem_contact_field_missing', array('{field}' => gTxt('zem_contact_recipient')));
 			}
 			else
 			{
@@ -259,11 +286,15 @@ function zem_contact($atts, $thing = '')
 		}
 
 		$msg = join("\n\n", $msg);
+		$msg = str_replace("\r\n", "\n", $msg);
+		$msg = str_replace("\r", "\n", $msg);
+		$msg = str_replace("\n", $sep, $msg);
 
 		if ($from)
 		{
 			$reply = $zem_contact_from;
 		}
+
 		else
 		{
 			$from = $zem_contact_from;
@@ -391,6 +422,8 @@ EOM;
 
 		if (mail($to, $subject, $msg, $headers))
 		{
+			$_POST = array();
+
 			if ($copysender and $zem_contact_from)
 			{
 				$GLOBALS['hak_wine_hide_cc'] = true;
@@ -468,11 +501,11 @@ EOM;
 
 
         $_POST = array();
-        mail(zem_contact_strip($zem_contact_from), $subject, $msg, $headers);
+				mail(zem_contact_strip($zem_contact_from), $subject, $msg, $headers);
 
         if (!empty($alsocopy)) {
             mail(zem_contact_strip($alsocopy), $subject, $msg, $headers);
-        }
+			}
 			}
 
 			$_POST = array();
@@ -491,7 +524,7 @@ EOM;
 				else
 				{
 					$uri = htmlspecialchars($uri);
-					$refresh = zem_contact_gTxt('refresh');
+					$refresh = gTxt('zem_contact_refresh');
 					echo <<<END
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -519,13 +552,13 @@ END;
 
 		else
 		{
-			$out .= graf(zem_contact_gTxt('mail_sorry'));
+			$out .= graf(gTxt('zem_contact_mail_sorry'));
 		}
 	}
 
 	if ($show_input and !$send_article or gps('zem_contact_send_article'))
 	{
-		return '<form method="post"'.((!$show_error and $zem_contact_error) ? '' : ' id="zcr'.$zem_contact_form_id.'"').' class="zemContactForm" action="'.htmlspecialchars(serverSet('REQUEST_URI')).'#zcr'.$zem_contact_form_id.'">'.
+		return '<form method="post"'.((!$show_error and $zem_contact_error) ? '' : ' id="zcr'.$zem_contact_form_id.'"').' class="'.$class.'" action="'.htmlspecialchars(serverSet('REQUEST_URI')).'#zcr'.$zem_contact_form_id.'">'.
 			( $label ? n.'<fieldset>' : n.'<div>' ).
 			( $label ? n.'<legend>'.htmlspecialchars($label).'</legend>' : '' ).
 			$out.
@@ -550,28 +583,41 @@ function zem_contact_text($atts)
 	global $zem_contact_error, $zem_contact_submit;
 
 	extract(zem_contact_lAtts(array(
-		'break'		=> br,
-		'default'	=> '',
-		'isError'	=> '',
-		'label'		=> zem_contact_gTxt('text'),
-		'max'		=> 100,
-		'min'		=> 0,
-		'name'		=> '',
-		'required'	=> 1,
-		'size'		=> '',
-		'format'	=> '',
-		'example'	=> '',
+		'type'         => 'text',
+		'class'        => 'zemText',
+		'break'        => br,
+		'default'      => '',
+		'isError'      => '',
+		'label'        => gTxt('zem_contact_text'),
+		'max'          => 100,
+		'min'          => 0,
+		'step'         => '',
+		'name'         => '',
+		'required'     => 1,
+		'pattern'      => '',
+		'placeholder'  => '',
+		'autofocus'    => '',
+		'autocomplete' => '',
+		'size'         => '',
 	), $atts));
 
-	$min = intval($min);
-	$max = intval($max);
 	$size = intval($size);
+
+	$numeric_types = array(
+		'date',
+		'datetime',
+		'datetime-local',
+		'month',
+		'number',
+		'range',
+		'time',
+		'week',
+	);
 
 	if (empty($name)) $name = zem_contact_label2name($label);
 
 	if ($zem_contact_submit)
 	{
-
 		$value = trim(ps($name));
 		$utf8len = preg_match_all("/./su", $value, $utf8ar);
 		$hlabel = htmlspecialchars($label);
@@ -580,38 +626,42 @@ function zem_contact_text($atts)
 		{
 			if (!$utf8len)
 			{
-				$zem_contact_error[] = zem_contact_gTxt('invalid_utf8', $hlabel);
+				$zem_contact_error[] = gTxt('zem_contact_invalid_utf8', array('{field}' => $hlabel));
 				$isError = "errorElement";
 			}
 
-			elseif ($min and $utf8len < $min)
+			elseif ($min and (!in_array($type, $numeric_types)) and $utf8len < $min)
 			{
-				$zem_contact_error[] = zem_contact_gTxt('min_warning', $hlabel, $min);
+				$zem_contact_error[] = gTxt('zem_contact_min_warning', array('{field}' => $hlabel, '{value}' => $min));
 				$isError = "errorElement";
 			}
 
-			elseif ($max and $utf8len > $max)
+			elseif ($max and (!in_array($type, $numeric_types)) and $utf8len > $max)
 			{
-				$zem_contact_error[] = zem_contact_gTxt('max_warning', $hlabel, $max);
+				$zem_contact_error[] = gTxt('zem_contact_max_warning', array('{field}' => $hlabel, '{value}' => $max));
 				$isError = "errorElement";
-				#$value = join('',array_slice($ar[0],0,$max));
 			}
-			elseif (!empty($format) && !preg_match($format, $value))
+
+			elseif ($min and (in_array($type, $numeric_types)) and $value < $min)
 			{
-				echo "format=$format<br />value=$value<br />";
-				$zem_contact_error[] = zem_contact_gTxt('invalid_format', $hlabel, $example);
+				$zem_contact_error[] = gTxt('zem_contact_minval_warning', array('{field}' => $hlabel, '{value}' => $min));
+				$isError = "errorElement";
+			}
+
+			elseif ($max and (in_array($type, $numeric_types)) and $value > $max)
+			{
+				$zem_contact_error[] = gTxt('zem_contact_maxval_warning', array('{field}' => $hlabel, '{value}' => $max));
 				$isError = "errorElement";
 			}
 
 			else
 			{
-
 				zem_contact_store($name, $label, $value);
 			}
 		}
 		elseif ($required)
 		{
-			$zem_contact_error[] = zem_contact_gTxt('field_missing', $hlabel);
+			$zem_contact_error[] = gTxt('zem_contact_field_missing', array('{field}' => $hlabel));
 			$isError = "errorElement";
 		}
 	}
@@ -621,13 +671,25 @@ function zem_contact_text($atts)
 		$value = $default;
 	}
 
-	$size = ($size) ? ' size="'.$size.'"' : '';
-	$maxlength = ($max) ? ' maxlength="'.$max.'"' : '';
+	$doctype = get_pref('doctype');
+	$min_att = $max_att = $step_att = '';
 
+	if ($doctype !== 'xhtml') {
+		$min_att = ($min !== '') ? ' min="'.$min.'"' : '';
+		$max_att = ($max !== '') ? ' max="'.$max.'"' : '';
+		$step_att = ($step !== '') ? ' step="'.$step.'"' : '';
+	}
+
+	$size = ($size) ? ' size="'.$size.'"' : '';
+	$maxlength = ($max && !in_array($type, $numeric_types)) ? ' maxlength="'.$max.'"' : '';
+	$pattern = ($pattern) ? ' pattern="'.$pattern.'"' : '';
+	$placeholder = ($placeholder) ? ' placeholder="'.$placeholder.'"' : '';
+	$autofocus = ($autofocus) ? ' autofocus="'.$autofocus.'"' : '';
+	$autocomplete = ($autocomplete) ? ' autocomplete="'.$autocomplete.'"' : '';
 	$zemRequired = $required ? 'zemRequired' : '';
 
-        return '<label for="'.$name.'" class="zemText '.$zemRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>'.$break.
-		'<input type="text" id="'.$name.'" class="zemText '.$zemRequired.$isError.'" name="'.$name.'" value="'.htmlspecialchars($value).'"'.$size.$maxlength.' />';
+        return '<label for="'.$name.'" class="'.$class.' '.$zemRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>'.$break.
+		'<input type="'.$type.'" id="'.$name.'" class="'.$class.' '.$zemRequired.$isError.'" name="'.$name.'" value="'.htmlspecialchars($value).'"'.$size.$maxlength.$pattern.$placeholder.$autofocus.$autocomplete.$min_att.$max_att.$step_att.' />';
 }
 
 function zem_contact_textarea($atts)
@@ -635,16 +697,19 @@ function zem_contact_textarea($atts)
 	global $zem_contact_error, $zem_contact_submit;
 
 	extract(zem_contact_lAtts(array(
-		'break'		=> br,
-		'cols'		=> 58,
-		'default'	=> '',
-		'isError'	=> '',
-		'label'		=> zem_contact_gTxt('message'),
-		'max'		=> 10000,
-		'min'		=> 0,
-		'name'		=> '',
-		'required'	=> 1,
-		'rows'		=> 8
+		'break'       => br,
+		'class'       => 'zemTextarea',
+		'cols'        => 58,
+		'default'     => '',
+		'isError'     => '',
+		'label'       => gTxt('zem_contact_message'),
+		'max'         => 10000,
+		'min'         => 0,
+		'name'        => '',
+		'required'    => 1,
+		'placeholder' => '',
+		'autofocus'   => '',
+		'rows'        => 8
 	), $atts));
 
 	$min = intval($min);
@@ -660,24 +725,23 @@ function zem_contact_textarea($atts)
 		$utf8len = preg_match_all("/./su", ltrim($value), $utf8ar);
 		$hlabel = htmlspecialchars($label);
 
-
 		if (strlen(ltrim($value)))
 		{
 			if (!$utf8len)
 			{
-				$zem_contact_error[] = zem_contact_gTxt('invalid_utf8', $hlabel);
+				$zem_contact_error[] = gTxt('zem_contact_invalid_utf8', array('{field}' => $hlabel));
 				$isError = "errorElement";
 			}
 
 			elseif ($min and $utf8len < $min)
 			{
-				$zem_contact_error[] = zem_contact_gTxt('min_warning', $hlabel, $min);
+				$zem_contact_error[] = gTxt('zem_contact_min_warning', array('{field}' => $hlabel, '{value}' => $min));
 				$isError = "errorElement";
 			}
 
 			elseif ($max and $utf8len > $max)
 			{
-				$zem_contact_error[] = zem_contact_gTxt('max_warning', $hlabel, $max);
+				$zem_contact_error[] = gTxt('zem_contact_max_warning', array('{field}' => $hlabel, '{value}' => $max));
 				$isError = "errorElement";
 				#$value = join('',array_slice($utf8ar[0],0,$max));
 			}
@@ -690,7 +754,7 @@ function zem_contact_textarea($atts)
 
 		elseif ($required)
 		{
-			$zem_contact_error[] = zem_contact_gTxt('field_missing', $hlabel);
+			$zem_contact_error[] = gTxt('zem_contact_field_missing', array('{field}' => $hlabel));
 			$isError = "errorElement";
 		}
 	}
@@ -701,9 +765,11 @@ function zem_contact_textarea($atts)
 	}
 
 	$zemRequired = $required ? 'zemRequired' : '';
+	$placeholder = ($placeholder) ? ' placeholder="'.$placeholder.'"' : '';
+	$autofocus = ($autofocus) ? ' autofocus="'.$autofocus.'"' : '';
 
-	return '<label for="'.$name.'" class="zemTextarea '.$zemRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>'.$break.
-		'<textarea id="'.$name.'" class="zemTextarea '.$zemRequired.$isError.'" name="'.$name.'" cols="'.$cols.'" rows="'.$rows.'">'.htmlspecialchars($value).'</textarea>';
+	return '<label for="'.$name.'" class="'.$class.' '.$zemRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>'.$break.
+		'<textarea id="'.$name.'" class="'.$class.' '.$zemRequired.$isError.'" name="'.$name.'" cols="'.$cols.'" rows="'.$rows.'"'.$placeholder.$autofocus.'>'.htmlspecialchars($value).'</textarea>';
 }
 
 function zem_contact_email($atts)
@@ -711,15 +777,20 @@ function zem_contact_email($atts)
 	global $zem_contact_error, $zem_contact_submit, $zem_contact_from, $zem_contact_recipient;
 
 	extract(zem_contact_lAtts(array(
-		'default'	=> '',
-		'isError'	=> '',
-		'label'		=> zem_contact_gTxt('email'),
-		'max'		=> 100,
-		'min'		=> 0,
-		'name'		=> '',
-		'required'	=> 1,
-		'break'		=> br,
-		'size'		=> '',
+		'type'         => 'email',
+		'default'      => '',
+		'isError'      => '',
+		'label'        => gTxt('zem_contact_email'),
+		'max'          => 100,
+		'min'          => 0,
+		'name'         => '',
+		'required'     => 1,
+		'break'        => br,
+		'class'        => '',
+		'size'         => '',
+		'placeholder'  => '',
+		'autofocus'    => '',
+		'autocomplete' => '',
 		'send_article'	=> 0
 	), $atts));
 
@@ -731,7 +802,7 @@ function zem_contact_email($atts)
 	{
 		if (!is_valid_email($email))
 		{
-			$zem_contact_error[] = zem_contact_gTxt('invalid_email', htmlspecialchars($email));
+			$zem_contact_error[] = gTxt('zem_contact_invalid_email', array('{email}' => htmlspecialchars($email)));
 			$isError = "errorElement";
 		}
 
@@ -742,7 +813,7 @@ function zem_contact_email($atts)
 
 			if (is_callable('checkdnsrr') and checkdnsrr('textpattern.com.','A') and !checkdnsrr($domain.'.','MX') and !checkdnsrr($domain.'.','A'))
 			{
-				$zem_contact_error[] = zem_contact_gTxt('invalid_host', htmlspecialchars($domain));
+				$zem_contact_error[] = gTxt('zem_contact_invalid_host', array('{host}' => htmlspecialchars($domain)));
 				$isError = "errorElement";
 			}
 
@@ -759,15 +830,20 @@ function zem_contact_email($atts)
 	}
 
 	return zem_contact_text(array(
-		'default'	=> $email,
-		'isError'	=> $isError,
-		'label'		=> $label,
-		'max'		=> $max,
-		'min'		=> $min,
-		'name'		=> $name,
-		'required'	=> $required,
-		'break'		=> $break,
-		'size'		=> $size
+		'type'         => $type,
+		'default'      => $email,
+		'isError'      => $isError,
+		'label'        => $label,
+		'max'          => $max,
+		'min'          => $min,
+		'name'         => $name,
+		'required'     => $required,
+		'break'        => $break,
+		'class'        => $class,
+		'size'         => $size,
+		'placeholder'  => $placeholder,
+		'autofocus'    => $autofocus,
+		'autocomplete' => $autocomplete,
 	));
 }
 
@@ -776,19 +852,21 @@ function zem_contact_select($atts)
 	global $zem_contact_error, $zem_contact_submit;
 
 	extract(zem_contact_lAtts(array(
-		'name'		=> '',
-		'break'		=> ' ',
-		'delimiter'	=> ',',
-		'isError'	=> '',
-		'label'		=> zem_contact_gTxt('option'),
-		'list'		=> zem_contact_gTxt('general_inquiry'),
-		'required'	=> 1,
-		'selected'	=> ''
+		'name'      => '',
+		'break'     => ' ',
+		'class'     => 'zemSelect',
+		'delimiter' => ',',
+		'isError'   => '',
+		'label'     => gTxt('zem_contact_option'),
+		'list'      => gTxt('zem_contact_general_inquiry'),
+		'required'  => 1,
+		'selected'  => '',
+		'autofocus' => '',
 	), $atts));
 
 	if (empty($name)) $name = zem_contact_label2name($label);
 
-	$list = array_map('trim', split($delimiter, preg_replace('/[\r\n\t\s]+/', ' ',$list)));
+	$list = array_map('trim', explode($delimiter, preg_replace('/[\r\n\t\s]+/', ' ',$list)));
 
 	if ($zem_contact_submit)
 	{
@@ -803,14 +881,14 @@ function zem_contact_select($atts)
 
 			else
 			{
-				$zem_contact_error[] = zem_contact_gTxt('invalid_value', htmlspecialchars($label), htmlspecialchars($value));
+				$zem_contact_error[] = gTxt('zem_contact_invalid_value', array('{field}' => htmlspecialchars($label), '{value}' => htmlspecialchars($value)));
 				$isError = "errorElement";
 			}
 		}
 
 		elseif ($required)
 		{
-			$zem_contact_error[] = zem_contact_gTxt('field_missing', htmlspecialchars($label));
+			$zem_contact_error[] = gTxt('zem_contact_field_missing', array('{field}' => htmlspecialchars($label)));
 			$isError = "errorElement";
 		}
 	}
@@ -827,9 +905,10 @@ function zem_contact_select($atts)
 	}
 
 	$zemRequired = $required ? 'zemRequired' : '';
+	$autofocus = ($autofocus) ? ' autofocus="'.$autofocus.'"' : '';
 
-	return '<label for="'.$name.'" class="zemSelect '.$zemRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>'.$break.
-		n.'<select id="'.$name.'" name="'.$name.'" class="zemSelect '.$zemRequired.$isError.'">'.
+	return '<label for="'.$name.'" class="'.$class.' '.$zemRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>'.$break.
+		n.'<select id="'.$name.'" name="'.$name.'" class="'.$class.' '.$zemRequired.$isError.'"'.$autofocus.'>'.
 			$out.
 		n.'</select>';
 }
@@ -839,12 +918,14 @@ function zem_contact_checkbox($atts)
 	global $zem_contact_error, $zem_contact_submit;
 
 	extract(zem_contact_lAtts(array(
-		'break'		=> ' ',
-		'checked'	=> 0,
-		'isError'	=> '',
-		'label'		=> zem_contact_gTxt('checkbox'),
-		'name'		=> '',
-		'required'	=> 1
+		'break'     => ' ',
+		'class'     => 'zemCheckbox',
+		'checked'   => 0,
+		'isError'   => '',
+		'label'     => gTxt('zem_contact_checkbox'),
+		'name'      => '',
+		'required'  => 1,
+		'autofocus' => '',
 	), $atts));
 
 	if (empty($name)) $name = zem_contact_label2name($label);
@@ -855,7 +936,7 @@ function zem_contact_checkbox($atts)
 
 		if ($required and !$value)
 		{
-			$zem_contact_error[] = zem_contact_gTxt('field_missing', htmlspecialchars($label));
+			$zem_contact_error[] = gTxt('zem_contact_field_missing', array('{field}' => htmlspecialchars($label)));
 			$isError = "errorElement";
 		}
 
@@ -870,10 +951,11 @@ function zem_contact_checkbox($atts)
 	}
 
 	$zemRequired = $required ? 'zemRequired' : '';
+	$autofocus = ($autofocus) ? ' autofocus="'.$autofocus.'"' : '';
 
-	return '<input type="checkbox" id="'.$name.'" class="zemCheckbox '.$zemRequired.$isError.'" name="'.$name.'"'.
-		($value ? ' checked="checked"' : '').' />'.$break.
-		'<label for="'.$name.'" class="zemCheckbox '.$zemRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>';
+	return '<input type="checkbox" id="'.$name.'" class="'.$class.' '.$zemRequired.$isError.'" name="'.$name.'"'.
+		($value ? ' checked="checked"' : '').$autofocus.' />'.$break.
+		'<label for="'.$name.'" class="'.$class.' '.$zemRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>';
 }
 
 function zem_contact_serverinfo($atts)
@@ -900,7 +982,7 @@ function zem_contact_secret($atts, $thing = '')
 
 	extract(zem_contact_lAtts(array(
 		'name'	=> '',
-		'label'	=> zem_contact_gTxt('secret'),
+		'label'	=> gTxt('zem_contact_secret'),
 		'value'	=> ''
 	), $atts));
 
@@ -920,18 +1002,20 @@ function zem_contact_radio($atts)
 	global $zem_contact_error, $zem_contact_submit, $zem_contact_values;
 
 	extract(zem_contact_lAtts(array(
-		'break'		=> ' ',
-		'checked'	=> 0,
-		'group'		=> '',
-		'label'		=> zem_contact_gTxt('option'),
-		'name'		=> ''
+		'break'     => ' ',
+		'class'     => 'zemRadio',
+		'checked'   => 0,
+		'group'     => '',
+		'label'     => gTxt('zem_contact_option'),
+		'name'      => '',
+		'autofocus' => '',
 	), $atts));
 
 	static $cur_name = '';
 	static $cur_group = '';
 
 	if (!$name and !$group and !$cur_name and !$cur_group) {
-		$cur_group = zem_contact_gTxt('radio');
+		$cur_group = gTxt('zem_contact_radio');
 		$cur_name = $cur_group;
 	}
 	if ($group and !$name and $group != $cur_group) $name = $group;
@@ -960,15 +1044,17 @@ function zem_contact_radio($atts)
 		$is_checked = $checked;
 	}
 
-	return '<input value="'.$id.'" type="radio" id="'.$id.'" class="zemRadio '.$name.'" name="'.$name.'"'.
+	$autofocus = ($autofocus) ? ' autofocus="'.$autofocus.'"' : '';
+
+	return '<input value="'.$id.'" type="radio" id="'.$id.'" class="'.$class.' '.$name.'" name="'.$name.'"'.$autofocus.
 		( $is_checked ? ' checked="checked" />' : ' />').$break.
-		'<label for="'.$id.'" class="zemRadio '.$name.'">'.htmlspecialchars($label).'</label>';
+		'<label for="'.$id.'" class="'.$class.' '.$name.'">'.htmlspecialchars($label).'</label>';
 }
 
 function zem_contact_send_article($atts)
 {
 	if (!isset($_REQUEST['zem_contact_send_article'])) {
-		$linktext = (empty($atts['linktext'])) ? zem_contact_gTxt('send_article') : $atts['linktext'];
+		$linktext = (empty($atts['linktext'])) ? gTxt('zem_contact_send_article') : $atts['linktext'];
 		$join = (empty($_SERVER['QUERY_STRING'])) ? '?' : '&';
 		$href = $_SERVER['REQUEST_URI'].$join.'zem_contact_send_article=yes';
 		return '<a href="'.htmlspecialchars($href).'">'.htmlspecialchars($linktext).'</a>';
@@ -979,19 +1065,20 @@ function zem_contact_send_article($atts)
 function zem_contact_submit($atts, $thing)
 {
 	extract(zem_contact_lAtts(array(
-		'button'	=> 0,
-		'label'		=> zem_contact_gTxt('send')
+		'button' => 0,
+		'label'  => gTxt('zem_contact_send'),
+		'class'  => 'zemSubmit',
 	), $atts));
 
 	$label = htmlspecialchars($label);
 
 	if ($button or strlen($thing))
 	{
-		return '<button type="submit" class="zemSubmit" name="zem_contact_submit" value="'.$label.'">'.($thing ? trim(parse($thing)) : $label).'</button>';
+		return '<button type="submit" class="'.$class.'" name="zem_contact_submit" value="'.$label.'">'.($thing ? trim(parse($thing)) : $label).'</button>';
 	}
 	else
 	{
-		return '<input type="submit" class="zemSubmit" name="zem_contact_submit" value="'.$label.'" />';
+		return '<input type="submit" class="'.$class.'" name="zem_contact_submit" value="'.$label.'" />';
 	}
 }
 
@@ -1056,7 +1143,6 @@ function zem_contact_label2name($label)
 function zem_contact_store($name, $label, $value)
 {
 	global $zem_contact_form, $zem_contact_labels, $zem_contact_values;
-
 	$zem_contact_form[$label] = $value;
 	$zem_contact_labels[$name] = $label;
 	$zem_contact_values[$name] = $value;
@@ -1155,19 +1241,17 @@ if (0) {
 
 	<p>Please reports bugs and problems with this plugin in <a href="http://forum.textpattern.com/viewtopic.php?id=23728">this forum thread</a>.</p>
 
-	<p class="required">This plugin requires a separate language plugin called <code>zem_contact_lang</code> to be installed and activated to work properly.</p>
-
 	<h2 id="contents">Contents</h2>
 
 	<ul>
-		<li><a href="#features">Features</a></li>
+		<li><a href="#features">Features</a>
 		<li><a href="#start">Getting started</a>
 	<ul>
 		<li><a href="#contactform">Contact form</a></li>
-		<li><a href="#sendarticle">Send article</a></li>
 	</ul></li>
-		<li><a href="#tags">Tags</a>
 	<ul>
+		<li><a href="#sendarticle">Send article</a></li>
+		<li><a href="#tags">Tags</a>
 		<li><a href="#zc"> <code>&#60;txp:zem_contact /&#62;</code> </a></li>
 		<li><a href="#zc_text"> <code>&#60;txp:zem_contact_text /&#62;</code> </a></li>
 		<li><a href="#zc_email"> <code>&#60;txp:zem_contact_email /&#62;</code> </a></li>
@@ -1178,17 +1262,21 @@ if (0) {
 		<li><a href="#zc_radio"> <code>&#60;txp:zem_contact_radio /&#62;</code> </a></li>
 		<li><a href="#zc_secret"> <code>&#60;txp:zem_contact_secret /&#62;</code> </a></li>
 		<li><a href="#zc_server_info"> <code>&#60;txp:zem_contact_serverinfo /&#62;</code> </a></li>
-		<li><a href="#zc_send_article"> <code>&#60;txp:zem_contact_send_article /&#62;</code> </a></li>
 	</ul></li>
-		<li><a href="#advanced">Advanced examples</a>
 	<ul>
+		<li><a href="#zc_send_article"> <code>&#60;txp:zem_contact_send_article /&#62;</code> </a></li>
+		<li><a href="#advanced">Advanced examples</a>
 		<li><a href="#show_error">Separate input and error forms</a></li>
 		<li><a href="#subject_form">User selectable subject field</a></li>
+	</ul></li>
+	<ul>
 		<li><a href="#to_form">User selectable recipient, without showing email addresses</a></li>
 	</ul></li>
 		<li><a href="#styling">Styling</a></li>
 		<li><a href="#history">History</a></li>
 		<li><a href="#credits">Credits</a></li>
+	</ul>
+	<ul>
 		<li><a href="#api">Plugin <span class="caps"><span class="caps">API</span></span> and callback events</a></li>
 	</ul>
 
@@ -1202,6 +1290,8 @@ if (0) {
 		<li>Accessible form layout, including <code>&#60;label&#62;</code>, <code>&#60;legend&#62;</code> and <code>&#60;fieldset&#62;</code> tags.</li>
 		<li>Various classes and ids to allow easy styling of all parts of the form.</li>
 		<li>A separate language plug-in to enable easy localisation.</li>
+	</ul>
+	<ul>
 		<li>Spam prevention <span class="caps"><span class="caps">API</span></span> (used by Tranquillo&#8217;s <code>pap_contact_cleaner</code> plugin).</li>
 	</ul>
 
@@ -1238,6 +1328,8 @@ if (0) {
 	<p>Within the context of an individual article, this plugin can be used to send the article (or excerpt, if it exists) to an email address specified by the visitor. This requires at least two tags:
 	<ul>
 		<li><code>zem_contact</code>, to create form that is initially hidden by setting the <code>send_article</code> attribute.</li>
+	</ul>
+	<ul>
 		<li><code>zem_contact_send_article</code>, to create a &#8216;send article&#8217; link which reveals the aforementioned form when clicked.</li>
 	</ul></p>
 
@@ -1248,6 +1340,8 @@ if (0) {
 	<p>By default the form contains fields for your name and email address, the recipient&#8217;s email address and a personal message, but similar to contact forms you can create your own form layout. Some things you need to know:
 	<ul>
 		<li>Set the <code>send_article</code> attribute to <code>1</code> in the <code>zem_contact</code> tag.</li>
+	</ul>
+	<ul>
 		<li>Use a <code>zem_contact_email</code> tag with the <code>send_article</code> attribute set to <code>1</code>. This field will be used as the recipient email address.</li>
 	</ul></p>
 
@@ -1281,6 +1375,8 @@ if (0) {
 	<ul>
 		<li><code>to=&#34;email address&#34;</code> <span class="required">required</span><br />
 Recipient email address.</li>
+	</ul>
+	<ul>
 		<li><code>to_form=&#34;form name&#34;</code><br />
 Use specified form (overrides <strong>to</strong> attribute).</li>
 	</ul>
@@ -1288,6 +1384,8 @@ Use specified form (overrides <strong>to</strong> attribute).</li>
 	<ul>
 		<li><code>from=&#34;email address&#34;</code><br />
 Email address used in the &#8220;From:&#8221; field when sending email. Defaults to the sender&#8217;s email address. If specified, the sender&#8217;s email address will be placed in the &#8220;Reply-To:&#8221; field instead.</li>
+	</ul>
+	<ul>
 		<li><code>from_form=&#34;form name&#34;</code><br />
 Use specified form (overrides <strong>from</strong> attribute).</li>
 	</ul>
@@ -1295,6 +1393,8 @@ Use specified form (overrides <strong>from</strong> attribute).</li>
 	<ul>
 		<li><code>subject=&#34;subject text&#34;</code><br />
 Subject used when sending an email. Default is the site name.</li>
+	</ul>
+	<ul>
 		<li><code>subject_form=&#34;form name&#34;</code><br />
 Use specified form (overrides <strong>subject</strong> attribute).</li>
 	</ul>
@@ -1304,6 +1404,8 @@ Use specified form (overrides <strong>subject</strong> attribute).</li>
 Message shown after successfully submitting a message. Default is <strong>Thank you, your message has been sent</strong>.</li>
 		<li><code>thanks_form=&#34;form name&#34;</code><br />
 Use specified form (overrides <strong>thanks</strong> attribute).</li>
+	</ul>
+	<ul>
 		<li><code>redirect=&#34;URL&#34;</code><br />
 Redirect to specified <span class="caps"><span class="caps">URL</span></span> (overrides <strong>thanks</strong> and <strong>thanks_form</strong> attributes). <span class="caps"><span class="caps">URL</span></span> must be relative to the Textpattern Site <span class="caps"><span class="caps">URL</span></span>. Example: <em>redirect=&#8220;monkey&#8221;</em> would redirect to http://example.com/monkey.</li>
 	</ul>
@@ -1313,6 +1415,8 @@ Redirect to specified <span class="caps"><span class="caps">URL</span></span> (o
 Label for the contact form. If set to an empty string, display of the fieldset and legend tags will be suppressed. Default is <strong>Contact</strong>.</li>
 		<li><code>send_article=&#34;boolean&#34;</code><br />
 Whether to use this form to <a href="#article">send an article</a>. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>0</strong> (no).</li>
+	</ul>
+	<ul>
 		<li><code>copysender=&#34;boolean&#34;</code><br />
 Whether to send a copy of the email to the sender&#8217;s address. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>0</strong> (no).</li>
 	</ul>
@@ -1322,6 +1426,8 @@ Whether to send a copy of the email to the sender&#8217;s address. Available val
 Use specified form, containing the layout of the contact form fields.</li>
 		<li><code>show_input=&#34;boolean&#34;</code><br />
  Whether to display the form input fields. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>1</strong> (yes).</li>
+	</ul>
+	<ul>
 		<li><code>show_error=&#34;boolean&#34;</code><br />
  Whether to display error and status messages. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>1</strong> (yes).</li>
 	</ul>
@@ -1341,18 +1447,34 @@ Use specified form, containing the layout of the contact form fields.</li>
 	<ul>
 		<li><code>label=&#34;text&#34;</code><br />
 Text label displayed to the user. Default is <strong>Text</strong>.</li>
+		<li><code>type=&#34;value&#34;</code><br />
+Field type, as defined by the W3C, such as 'text', 'number', 'range', 'date', etc. Default is 'text'.</li>
 		<li><code>name=&#34;value&#34;</code><br />
 Field name, as used in the <span class="caps"><span class="caps">HTML</span></span> input tag.</li>
 		<li><code>break=&#34;tag&#34;</code><br />
 Break tag between the label and input field. Default is <code>&#60;br /&#62;</code>. Use <code>break=&#34;&#34;</code> to put the label and input field on the same line.</li>
 		<li><code>default=&#34;value&#34;</code><br />
 Default value when no input is provided.</li>
-		<li><code>min=&#34;integer&#34;</code><br />
-Minimum input length in characters. Default is <strong>0</strong>.</li>
-		<li><code>max=&#34;integer&#34;</code><br />
-Maximum input length in characters. Default is <strong>100</strong>.</li>
+		<li><code>min=&#34;number&#34;</code><br />
+Minimum input length in characters, or minimum field value for numeric types. Default is <strong>0</strong>.</li>
+		<li><code>max=&#34;number&#34;</code><br />
+Maximum input length in characters, or maximum field value for numeric types. Default is <strong>100</strong>.</li>
+		<li><code>step=&#34;number&#34;</code><br />
+Interval between successive permissible values in numeric input controls.</li>
 		<li><code>size=&#34;integer&#34;</code><br />
 Size of the input field as displayed to the user.</li>
+		<li><code>class=&#34;classname&#34;</code><br />
+CSS class to apply to the input field. Default is zemText.</li>
+		<li><code>placeholder=&#34;text&#34;</code><br />
+Placeholder text to put in the input field.</li>
+		<li><code>autofocus=&#34;boolean&#34;</code><br />
+Set the field to receive focus.</li>
+		<li><code>autocomplete=&#34;boolean&#34;</code><br />
+Permit the field to offer entries from previously supplied content.</li>
+		<li><code>pattern=&#34;regular expression&#34;</code><br />
+Javascript regular expression with which to validate the field contents.</li>
+	</ul>
+	<ul>
 		<li><code>required=&#34;boolean&#34;</code><br />
 Whether this text field must be filled out. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>1</strong> (yes).</li>
 	</ul>
@@ -1377,6 +1499,8 @@ Whether this text field must be filled out. Available values: <strong>1</strong>
 Text label displayed to the user. Default is <strong>Email</strong>.</li>
 		<li><code>name=&#34;value&#34;</code><br />
 Field name, as used in the <span class="caps"><span class="caps">HTML</span></span> input tag.</li>
+		<li><code>type=&#34;value&#34;</code><br />
+Field type, as defined by the W3C. Suitable values are 'text' or 'email'. Default is 'email'.</li>
 		<li><code>break=&#34;tag&#34;</code><br />
 Break tag between the label and input field. Default is <code>&#60;br /&#62;</code>. Use <code>break=&#34;&#34;</code> to put the label and input field on the same line.</li>
 		<li><code>default=&#34;value&#34;</code><br />
@@ -1389,6 +1513,16 @@ Maximum input length in characters. Default is <strong>100</strong>.</li>
 Size of the input field as displayed to the user.</li>
 		<li><code>required=&#34;boolean&#34;</code><br />
 Whether this text field must be filled out. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>1</strong> (yes).</li>
+		<li><code>class=&#34;classname&#34;</code><br />
+CSS class to apply to the field. Default is zemText.</li>
+		<li><code>placeholder=&#34;text&#34;</code><br />
+Placeholder text to put in the field.</li>
+		<li><code>autofocus=&#34;boolean&#34;</code><br />
+Set the field to receive initial focus.</li>
+		<li><code>autocomplete=&#34;boolean&#34;</code><br />
+Permit the field to offer entries from previously supplied content.</li>
+	</ul>
+	<ul>
 		<li><code>send_article=&#34;boolean&#34;</code><br />
 Whether this field is used as the recipient email address when using the send_article function. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>0</strong> (no).</li>
 	</ul>
@@ -1423,6 +1557,14 @@ Row height. Default is <strong>8</strong>.</li>
 Minimum input length in characters. Default is <strong>0</strong>.</li>
 		<li><code>max=&#34;integer&#34;</code><br />
 Maximum input length in characters. Default is <strong>10000</strong>.</li>
+		<li><code>class=&#34;classname&#34;</code><br />
+CSS class to apply to the textarea. Default is zemTextarea.</li>
+		<li><code>placeholder=&#34;text&#34;</code><br />
+Placeholder text to put in the textarea.</li>
+		<li><code>autofocus=&#34;boolean&#34;</code><br />
+Set the textarea to receive initial focus.</li>
+	</ul>
+	<ul>
 		<li><code>required=&#34;boolean&#34;</code><br />
 Whether this text field must be filled out. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>1</strong> (yes).</li>
 	</ul>
@@ -1446,6 +1588,10 @@ When used as a container tag, a &#8220;button&#8221; element will be used instea
 	<ul>
 		<li><code>label=&#34;text&#34;</code><br />
 Text shown on the submit button. Default is &#8220;Send&#8221;.</li>
+		<li><code>class=&#34;classname&#34;</code><br />
+CSS class to apply to the button. Default is zemSubmit</li>
+	</ul>
+	<ul>
 		<li><code>button=&#34;boolean&#34;</code><br />
 <em>Deprecated. Use a container tag if you want a button element.</em></li>
 	</ul>
@@ -1491,6 +1637,12 @@ Field name, as used in the <span class="caps"><span class="caps">HTML</span></sp
 Break tag between the label and input field. Default is <code>&#60;br /&#62;</code>. Use <code>break=&#34;&#34;</code> to put the label and input field on the same line.</li>
 		<li><code>delimiter=&#34;character&#34;</code><br />
 Separator character used in the <strong>list</strong> attribute. Default is <strong>,</strong> (comma).</li>
+		<li><code>class=&#34;classname&#34;</code><br />
+CSS class to apply to the field. Default is zemSelect.</li>
+		<li><code>autofocus=&#34;boolean&#34;</code><br />
+Set the field to receive initial focus.</li>
+	</ul>
+	<ul>
 		<li><code>required=&#34;boolean&#34;</code><br />
 Whether a non-empty option must be selected. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>1</strong> (yes).</li>
 	</ul>
@@ -1524,6 +1676,12 @@ Field name, as used in the <span class="caps"><span class="caps">HTML</span></sp
 Break tag between the label and input field. Default is <code>&#60;br /&#62;</code>. Use <code>break=&#34;&#34;</code> to put the label and input field on the same line.</li>
 		<li><code>checked=&#34;boolean&#34;</code><br />
 Whether this box is checked when first displayed. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is &#8220;0&#8221; (no).</li>
+		<li><code>class=&#34;classname&#34;</code><br />
+CSS class to apply to the field. Default is zemCheckbox.</li>
+		<li><code>autofocus=&#34;boolean&#34;</code><br />
+Set the field to receive initial focus.</li>
+	</ul>
+	<ul>
 		<li><code>required=&#34;boolean&#34;</code><br />
 Whether this checkbox must be filled out. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>1</strong> (yes).</li>
 	</ul>
@@ -1560,6 +1718,12 @@ Text label displayed to the user as radio button option.</li>
 Field name, as used in the <span class="caps"><span class="caps">HTML</span></span> input tag. This attribute value is remembered for subsequent radio buttons, so you only have to set it on the first radio button of a group. If it hasn&#8217;t been set at all, it will be derived from the <code>group</code> attribute.</li>
 		<li><code>break=&#34;tag&#34;</code><br />
 Break tag between the label and field. Default is a space.</li>
+		<li><code>class=&#34;classname&#34;</code><br />
+CSS class to apply to the field. Default is zemRadio.</li>
+		<li><code>autofocus=&#34;boolean&#34;</code><br />
+Set the field to receive initial focus.</li>
+	</ul>
+	<ul>
 		<li><code>checked=&#34;boolean&#34;</code><br />
 Whether this radio option is checked when the form is first displayed. Available values: <strong>1</strong> (yes), <strong>0</strong> (no). Default is <strong>0</strong> (no).</li>
 	</ul>
@@ -1590,6 +1754,8 @@ Whether this radio option is checked when the form is first displayed. Available
 Used internally. Set this only if you have multiple &#8216;secret&#8217; form elements with identical labels.</li>
 		<li><code>label=&#34;text&#34;</code><br />
 Used to identify the field in the email. Default is <strong>Secret</strong>.</li>
+	</ul>
+	<ul>
 		<li><code>value=&#34;value&#34;</code><br />
 Some text you want to add to the email.</li>
 	</ul>
@@ -1619,6 +1785,8 @@ Some text you want to add to the email.</li>
 	<ul>
 		<li><code>name=&#34;value&#34;</code> <span class="required">required</span><br />
 Name of the server variable. See the <a href="http://php.net/manual/reserved.variables.php#reserved.variables.server"><span class="caps">PHP</span> manual</a> for a full list.</li>
+	</ul>
+	<ul>
 		<li><code>label=&#34;text&#34;</code><br />
 Used to identify the field in the email. Defaults to the value of the <strong>name</strong> attribute.</li>
 	</ul>
@@ -1753,6 +1921,8 @@ Text displayed for the link. Default is <strong>send article</strong></li>
 	<ol>
 		<li>One of <strong>zemText</strong>, <strong>zemTextarea</strong>, <strong>zemSelect</strong>, <strong>zemRadio</strong>, <strong>zemCheckbox</strong>, <strong>zemSubmit</strong>. It should be obvious which class is used for which form element (and corresponding label).</li>
 		<li><strong>zemRequired</strong> or <strong>errorElement</strong> or <strong>zemRequirederrorElement</strong>, depending on whether the form element is required, an error was found in whatever the visitor entered&#8230; or both.</li>
+	</ol>
+	<ol>
 		<li>An individual &#8220;id&#8221; or &#8220;class&#8221; set to the value of the <code>name</code> attribute of the corresponding tag. When styling forms based on this class, you should explicitly set the <code>name</code> attribute because automatically generated names may change in newer zem_contact_reborn versions.</li>
 	</ol></p>
 
@@ -1764,6 +1934,15 @@ Text displayed for the link. Default is <strong>send article</strong></li>
 To save space, links to forum topics that detail all the changes in each version have been added.</p>
 
 	<ul>
+		<li>10 sep 2013: <strong>version 4.5.0.0</strong>
+	<ul>
+		<li>HTML 5 attributes added: <code>placeholder</code>, <code>autofocus</code>, <code>autocomplete</code>, <code>type</code>, <code>pattern</code></li>
+		<li>CSS <code>class</code> attribute allows overriding built-in class names</li>
+		<li>Textpack replaces zem_contact_lang plugin</li>
+		<li>explode() replaces deprecated split()</li>
+	</ul></li>
+	</ul>
+	<ul>
 		<li>14 feb 2007: <strong>version 4.0.3.19</strong> <a href="http://forum.textpattern.com/viewtopic.php?id=21144">changelog</a>
 	<ul>
 		<li><a href="#sendarticle">send_article</a> functionality revised, requiring changes when upgrading from earlier versions</li>
@@ -1771,15 +1950,19 @@ To save space, links to forum topics that detail all the changes in each version
 		<li>Sets of radio buttons require the new <a href="#zc_radio">group</a> attribute</li>
 		<li>Yes/No values deprecated in favor for the <span class="caps"><span class="caps">TXP</span></span> standard 1/0 values (yes/no still work in this version)</li>
 	</ul></li>
+	</ul>
+	<ul>
 		<li>20 nov 2006: <strong>version 4.0.3.18</strong> <a href="http://forum.textpattern.com/viewtopic.php?id=19823">changelog</a>
 	<ul>
 		<li>IDs &#8216;zemContactForm&#8217; and &#8216;zemSubmit&#8217; have changed to classes to allow multiple forms per page</li>
+	</ul></li>
+	<ul>
 		<li>New language strings: &#8216;form_used&#8217;, &#8216;invalid_utf8&#8217;, &#8216;max_warning&#8217;, &#8216;name&#8217;, &#8216;refresh&#8217;, &#8216;secret&#8217;</li>
 	</ul></li>
 		<li>12 mar 2006: <strong>version 4.0.3.17</strong> <a href="http://forum.textpattern.com/viewtopic.php?id=13416">changelog</a></li>
 		<li>11 feb 2006: <strong>version .16</strong></li>
-		<li>06 feb 2006: <strong>version .15</strong></li>
-		<li>03 feb 2006: <strong>version .14</strong>
+		<li>06 feb 2006: <strong>version .15</strong>
+		<li>03 feb 2006: <strong>version .14</strong></li>
 	<ul>
 		<li>Requires separate zem_contact_lang plugin</li>
 	</ul></li>
@@ -1791,6 +1974,8 @@ To save space, links to forum topics that detail all the changes in each version
 		<li>16 jan 2006: <strong>version .05 and .06</strong></li>
 		<li>15 jan 2006: <strong>version .04</strong></li>
 		<li>10 jan 2006: <strong>version .03</strong></li>
+	</ul>
+	<ul>
 		<li>19 dec 2005: <strong>version .02</strong></li>
 	</ul>
 
@@ -1806,6 +1991,8 @@ To save space, links to forum topics that detail all the changes in each version
 		<li><strong>Tranquillo</strong> added the anti-spam <span class="caps"><span class="caps">API</span></span> and zem_contact_send_article functionality.</li>
 		<li><strong>aslsw66</strong>, <strong>jdykast</strong> and others (?) provided additional code</li>
 		<li><strong>Ruud</strong> cleaned up and audited the code to weed out bugs and completely revised the help text. Maintainer of versions 4.0.3.18 and up.</li>
+	</ul>
+	<ul>
 		<li>Supported and tested to destruction by the Textpattern community.</li>
 	</ul>
 
@@ -1818,6 +2005,8 @@ To save space, links to forum topics that detail all the changes in each version
 	<p>Two callback events exist in zem_contact_reborn:
 	<ul>
 		<li><code>zemcontact.submit</code> is called after the form is submitted and the values are checked if empty or valid email addresses, but before the mail is sent.</li>
+	</ul>
+	<ul>
 		<li><code>zemcontact.form</code> let&#8217;s you insert content in the contact form as displayed to the visitor.</li>
 	</ul></p>
 
