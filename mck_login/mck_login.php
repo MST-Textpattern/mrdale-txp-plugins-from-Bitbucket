@@ -55,7 +55,7 @@ $plugin['flags'] = '2';
 // abc_string_name => Localized String
 
 /** Uncomment me, if you need a textpack**/
-$plugin['textpack'] = <<< EOT
+$plugin['textpack'] = <<<EOT
 #@admin
 #@language en-gb
 mck_login_name_and_pass_required => Name and password are required.

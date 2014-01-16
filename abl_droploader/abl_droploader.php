@@ -54,7 +54,7 @@ $plugin['flags'] = '3';
 // #@language ISO-LANGUAGE-CODE
 // abc_string_name => Localized String
 
-$plugin['textpack'] = <<< EOT
+$plugin['textpack'] = <<<EOT
 #@admin
 #@language en-us
 abl_droploader_open => Upload Images

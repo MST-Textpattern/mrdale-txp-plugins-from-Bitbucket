@@ -45,7 +45,7 @@ if (!defined('PLUGIN_LIFECYCLE_NOTIFY')) define('PLUGIN_LIFECYCLE_NOTIFY', 0x000
 
 $plugin['flags'] = '2';
 
-$plugin['textpack'] = <<< EOT
+$plugin['textpack'] = <<<EOT
 EOT;
 
 if (!defined('txpinterface'))
