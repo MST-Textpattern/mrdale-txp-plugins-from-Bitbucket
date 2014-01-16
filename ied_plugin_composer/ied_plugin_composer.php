@@ -1678,7 +1678,7 @@ function ied_plugin_build_template($prt, $val='') {
 								.$val.n
 								.'EOT;'.n.n
 							: '/** Uncomment me, if you need a textpack'.n
-								.'$plugin[\'textpack\'] = <<< EOT'.n
+								.'$plugin[\'textpack\'] = <<<EOT'.n
 								.'#@admin'.n
 								.'#@language en-gb'.n
 								.'abc_sample_string => Sample String'.n
