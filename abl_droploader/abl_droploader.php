@@ -47,38 +47,7 @@ if (!defined('PLUGIN_LIFECYCLE_NOTIFY')) define('PLUGIN_LIFECYCLE_NOTIFY', 0x000
 
 $plugin['flags'] = '3';
 
-// Plugin 'textpack' is optional. It provides i18n strings to be used in conjunction with gTxt().
-// Syntax:
-// ## arbitrary comment
-// #@event
-// #@language ISO-LANGUAGE-CODE
-// abc_string_name => Localized String
 
-$plugin['textpack'] = <<<EOT
-#@admin
-#@language en-us
-abl_droploader_open => Upload Images
-abl_droploader_open_title => Open drag & drop multiple image uploader
-abl_droploader_close => &#x00d7;
-abl_droploader_close_title => Close DropLoader
-abl_droploader_error_method => Method {{method}} does not exist in abl.droploader-app.js.
-abl_droploader_info_text => Drop files here\n\nor click to select files
-abl_droploader_err_invalid_filetype => Cannot upload {{filename}}. Only images are allowed (jpg, jpeg, gif, png)!
-abl_droploader_err_browser_not_supported => Your browser does not support HTML5 file uploads!
-abl_droploader_err_too_many_files => Too many files!\\nPlease select {{maxfiles}} at most!
-abl_droploader_err_file_too_large => {{filename}} is too large!
-abl_droploader_all_files_uploaded => {{filecount}} files uploaded.
-abl_droploader_no_files_uploaded => \nNo files where uploaded.
-abl_droploader_some_files_uploaded => \n{{uploaded_files}} of {{filecount}} files uploaded.
-abl_droploader_prefs_image_max_upload_count => Maximum file count of image uploads
-abl_droploader_prefs_file_max_upload_count => Maximum file count of file uploads
-abl_droploader_prefs_reload_image_tab => Images-Tab: Close Droploader and reload image list after upload
-abl_droploader_prefs_use_default_stylesheet => Use default styles
-abl_droploader_prefs_custom_stylesheet => Custom stylesheet (path/filename)
-abl_droploader_prefs_article_image_fields => Article-image field(s) (comma separated list of CSS fieldnames, use #custom-n for custom field names)
-EOT;
-
-// End of textpack
 
 if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
