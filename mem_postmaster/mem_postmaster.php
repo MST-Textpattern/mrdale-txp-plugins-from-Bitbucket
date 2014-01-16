@@ -53,7 +53,7 @@ $plugin['flags'] = '0';
 // #@event
 // #@language ISO-LANGUAGE-CODE
 // abc_string_name => Localized String
-$plugin['textpack'] = <<< EOT
+$plugin['textpack'] = <<<EOT
 #@admin
 bab_pm_email_to_subscribers => Email to subscribers
 bab_pm_label_list_to_email => List to email
