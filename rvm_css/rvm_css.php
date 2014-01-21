@@ -72,6 +72,8 @@ if (!defined('txpinterface'))
 
 # --- BEGIN PLUGIN CODE ---
 
+@include_once('/scripts/lessphp/lessc.inc.php.php');
+
 if (txpinterface == 'admin')
 {
   register_callback('rvm_css_save', 'css', 'css_save');
