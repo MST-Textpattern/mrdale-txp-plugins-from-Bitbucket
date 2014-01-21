@@ -72,7 +72,7 @@ if (!defined('txpinterface'))
 
 # --- BEGIN PLUGIN CODE ---
 
-@include_once('/scripts/lessphp/lessc.inc.php.php');
+@include_once('/scripts/lessphp/lessc.inc.php');
 
 if (txpinterface == 'admin')
 {
