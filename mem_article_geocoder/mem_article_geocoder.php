@@ -75,12 +75,21 @@ THE SOFTWARE.
 }
 
 # --- BEGIN PLUGIN CODE ---
-define('MEM_CF_ADDRESS', 'custom-16');
-define('MEM_CF_CITY', 'custom-22');
-define('MEM_CF_STATE', 'custom-23');
-define('MEM_CF_ZIP', 'custom-24');
-define('MEM_CF_LATITUDE', 'custom-26');
-define('MEM_CF_LONGITUDE', 'custom-28');
+// define('MEM_CF_ADDRESS', 'custom-16');
+// define('MEM_CF_CITY', 'custom-22');
+// define('MEM_CF_STATE', 'custom-23');
+// define('MEM_CF_ZIP', 'custom-24');
+// define('MEM_CF_LATITUDE', 'custom-26');
+// define('MEM_CF_LONGITUDE', 'custom-28');
+// These were old hardcoded values ........................
+
+$MEM_CF_ADDRESS = get_pref('mem_geo_cf_address');
+$MEM_CF_CITY = get_pref('mem_geo_cf_city');
+$MEM_CF_STATE = get_pref('mem_geo_cf_state');
+$MEM_CF_ZIP = get_pref('mem_geo_cf_zip');
+$MEM_CF_LATITUDE = get_pref('mem_geo_cf_latitude');
+$MEM_CF_LONGITUDE = get_pref('mem_geo_cf_longitude');
+
 
 /****** DO NOT EDIT BELOW THIS LINE **********/
 
@@ -98,12 +107,12 @@ if (@txpinterface == 'admin')
 
 function mem_article_geocoder_js($event, $step)
 {
-	$address = MEM_CF_ADDRESS;
-	$city = MEM_CF_CITY;
-	$state = MEM_CF_STATE;
-	$zip = MEM_CF_ZIP;
-	$lat = MEM_CF_LATITUDE;
-	$lng = MEM_CF_LONGITUDE;
+	$address = $MEM_CF_ADDRESS;
+	$city = $MEM_CF_CITY;
+	$state = $MEM_CF_STATE;
+	$zip = $MEM_CF_ZIP;
+	$lat = $MEM_CF_LATITUDE;
+	$lng = $MEM_CF_LONGITUDE;
 
 	$js = <<< EOJS
 <script type="text/javascript" src="//maps.google.com/maps/api/js?sensor=false"></script>
