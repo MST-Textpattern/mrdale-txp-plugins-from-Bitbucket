@@ -75,16 +75,15 @@ THE SOFTWARE.
 }
 
 # --- BEGIN PLUGIN CODE ---
+
+// These were old hardcoded values ........................
+
 // define('MEM_CF_ADDRESS', 'custom-16');
 // define('MEM_CF_CITY', 'custom-22');
 // define('MEM_CF_STATE', 'custom-23');
 // define('MEM_CF_ZIP', 'custom-24');
 // define('MEM_CF_LATITUDE', 'custom-26');
 // define('MEM_CF_LONGITUDE', 'custom-28');
-// These were old hardcoded values ........................
-
-
-
 
 /****** DO NOT EDIT BELOW THIS LINE **********/
 
