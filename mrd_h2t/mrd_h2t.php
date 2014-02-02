@@ -107,7 +107,7 @@ extract(lAtts(array(
 }
 
 function mrd_entity_d($atts, $thing='') {
-   return html_entity_decode(parse($thing));
+   return html_entity_decode(parse($thing), ENT_QUOTES);
 }
 
 function mrd_entity_e($atts, $thing='') {
