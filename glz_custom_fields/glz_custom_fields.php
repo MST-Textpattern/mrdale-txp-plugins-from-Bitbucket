@@ -55,7 +55,7 @@ $plugin['flags'] = '3';
 // abc_string_name => Localized String
 
 /** Uncomment me, if you need a textpack
-$plugin['textpack'] = <<< EOT
+$plugin['textpack'] = <<<EOT
 #@admin
 #@language en-gb
 abc_sample_string => Sample String
