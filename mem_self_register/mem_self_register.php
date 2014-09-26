@@ -17,8 +17,8 @@ $plugin['name'] = 'mem_self_register';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.9.9';
-$plugin['author'] = 'Michael Manfre';
+$plugin['version'] = '0.9.9.1';
+$plugin['author'] = 'Michael Manfre + Dale Chapman';
 $plugin['author_uri'] = 'http://manfre.net/';
 $plugin['description'] = 'User self registration. Read the help to install.';
 
@@ -1095,9 +1095,9 @@ function mem_self_password_form_submit()
 		$subject = $mem_form_values['subject'];
 
 		if (mem_form_mail($from,$reply,$to,$subject,$msg))
-			return mem_self_gTxt('password_changed');
+			return '<div class="mem-message mem-changed">'.mem_self_gTxt('password_changed').'</div>';
 		else
-			return mem_self_gTxt('password_changed_mail_failed');
+			return  '<div class="mem-message mem-failed">'.mem_self_gTxt('password_changed_mail_failed').'</div>';
 	}
 	else {
 		// no email, fail silently
