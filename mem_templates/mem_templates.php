@@ -76,7 +76,7 @@ if (!defined('txpinterface'))
     -------------------------------------------------------------------------
 */
     $mem_templates = array(
-        "base_dir" =>           "import",
+        "base_dir" =>           "export",
         "subdir_section"	=>	"section",
         "subdir_plugins"	=>	"plugins",
         "subdir_pages"=>        "pages",
