@@ -461,7 +461,7 @@ function mem_form_text($atts)
 	}
 
     return '<label for="'.$name.'" class="'.$class.' '.$memRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>'.$break.
-		'<input type="'.($password ? 'password' : 'text').'" id="'.$name.'" class="'.$class.' '.$memRequired.$isError.'" name="'.$name.'" value="'.$value.'"'.$size.$maxlength.$placeholder
+		'<input type="'.($password ? 'password' : 'text').'" id="'.$name.'" class="'.$class.' '.$memRequired.$isError.'" name="'.$name.'" value="'.$value.'"'.$size.$maxlength.$placeholder.
 		( !empty($attrs) ? ' ' . $attrs : '').' />';
 }
 
@@ -712,7 +712,7 @@ function mem_form_textarea($atts, $thing='')
 	}
 
 	return '<label for="'.$name.'" class="'.$class.' '.$memRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>'.$break.
-		'<textarea id="'.$name.'" class="'.$class.' '.$memRequired.$isError.'" name="'.$name.'" cols="'.$cols.'" rows="'.$rows.'"'.$placeholder
+		'<textarea id="'.$name.'" class="'.$class.' '.$memRequired.$isError.'" name="'.$name.'" cols="'.$cols.'" rows="'.$rows.'"'.$placeholder.
 		( !empty($attrs) ? ' ' . $attrs : '').'>'.$value.'</textarea>';
 }
 
