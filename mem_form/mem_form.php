@@ -17,7 +17,7 @@ $plugin['name'] = 'mem_form';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.8.6';
+$plugin['version'] = '0.8.7';
 $plugin['author'] = 'Michael Manfre';
 $plugin['author_uri'] = 'http://manfre.net/';
 $plugin['description'] = 'A library plugin that provides support for html forms.';
@@ -71,8 +71,6 @@ if (!defined('txpinterface'))
         @include_once('zem_tpl.php');
 
 # --- BEGIN PLUGIN CODE ---
-
-
 $mem_glz_custom_fields_plugin = load_plugin('glz_custom_fields');
 
 // needed for MLP
@@ -371,21 +369,22 @@ function mem_form_text($atts)
 	global $mem_form_error, $mem_form_submit, $mem_form_default, $mem_form_default_break;
 
 	extract(mem_form_lAtts(array(
-		'break'		=> $mem_form_default_break,
-		'default'	=> '',
-		'isError'	=> '',
-		'label'		=> mem_form_gTxt('text'),
-		'max'		=> 100,
-		'min'		=> 0,
-		'name'		=> '',
-		'class'		=> 'memText',
-		'required'	=> 1,
-		'size'		=> '',
-		'password'	=> 0,
-		'format'	=> '',
-		'example'	=> '',
-		'escape_value'	=> 1,
-		'attrs'		=> ''
+		'break'        => $mem_form_default_break,
+		'default'      => '',
+		'isError'      => '',
+		'label'        => mem_form_gTxt('text'),
+		'placeholder'  => '',
+		'max'          => 100,
+		'min'          => 0,
+		'name'         => '',
+		'class'        => 'memText',
+		'required'     => 1,
+		'size'         => '',
+		'password'     => 0,
+		'format'       => '',
+		'example'      => '',
+		'escape_value' => 1,
+		'attrs'        => ''
 	), $atts));
 
 	$min = intval($min);
@@ -449,6 +448,7 @@ function mem_form_text($atts)
 
 	$size = ($size) ? ' size="'.$size.'"' : '';
 	$maxlength = ($max) ? ' maxlength="'.$max.'"' : '';
+	$placeholder = ($placeholder) ? ' placeholder="'.htmlspecialchars($placeholder).'"' : '';
 
 	$isError = $isError ? "errorElement" : '';
 
@@ -461,7 +461,7 @@ function mem_form_text($atts)
 	}
 
     return '<label for="'.$name.'" class="'.$class.' '.$memRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>'.$break.
-		'<input type="'.($password ? 'password' : 'text').'" id="'.$name.'" class="'.$class.' '.$memRequired.$isError.'" name="'.$name.'" value="'.$value.'"'.$size.$maxlength.
+		'<input type="'.($password ? 'password' : 'text').'" id="'.$name.'" class="'.$class.' '.$memRequired.$isError.'" name="'.$name.'" value="'.$value.'"'.$size.$maxlength.$placeholder
 		( !empty($attrs) ? ' ' . $attrs : '').' />';
 }
 
@@ -629,19 +629,20 @@ function mem_form_textarea($atts, $thing='')
 	global $mem_form_error, $mem_form_submit, $mem_form_default, $mem_form_default_break;
 
 	extract(mem_form_lAtts(array(
-		'break'		=> $mem_form_default_break,
-		'cols'		=> 58,
-		'default'	=> '',
-		'isError'	=> '',
-		'label'		=> mem_form_gTxt('textarea'),
-		'max'		=> 10000,
-		'min'		=> 0,
-		'name'		=> '',
-		'class'		=> 'memTextarea',
-		'required'	=> 1,
-		'rows'		=> 8,
-		'escape_value'	=> 1,
-		'attrs'		=> ''
+		'break'        => $mem_form_default_break,
+		'cols'         => 58,
+		'default'      => '',
+		'isError'      => '',
+		'label'        => mem_form_gTxt('textarea'),
+		'placeholder'  => '',
+		'max'          => 10000,
+		'min'          => 0,
+		'name'         => '',
+		'class'        => 'memTextarea',
+		'required'     => 1,
+		'rows'         => 8,
+		'escape_value' => 1,
+		'attrs'        => ''
 	), $atts));
 
 	$min = intval($min);
@@ -703,6 +704,7 @@ function mem_form_textarea($atts, $thing='')
 	$isError = $isError ? 'errorElement' : '';
 	$memRequired = $required ? 'memRequired' : '';
 	$class = htmlspecialchars($class);
+	$placeholder = ($placeholder) ? ' placeholder="'.htmlspecialchars($placeholder).'"' : '';
 
 	if ($escape_value)
 	{
@@ -710,7 +712,7 @@ function mem_form_textarea($atts, $thing='')
 	}
 
 	return '<label for="'.$name.'" class="'.$class.' '.$memRequired.$isError.' '.$name.'">'.htmlspecialchars($label).'</label>'.$break.
-		'<textarea id="'.$name.'" class="'.$class.' '.$memRequired.$isError.'" name="'.$name.'" cols="'.$cols.'" rows="'.$rows.'"'.
+		'<textarea id="'.$name.'" class="'.$class.' '.$memRequired.$isError.'" name="'.$name.'" cols="'.$cols.'" rows="'.$rows.'"'.$placeholder
 		( !empty($attrs) ? ' ' . $attrs : '').'>'.$value.'</textarea>';
 }
 
@@ -719,16 +721,17 @@ function mem_form_email($atts)
 	global $mem_form_error, $mem_form_submit, $mem_form_from, $mem_form_default, $mem_form_default_break;
 
 	extract(mem_form_lAtts(array(
-		'default'	=> '',
-		'isError'	=> '',
-		'label'		=> mem_form_gTxt('email'),
-		'max'		=> 100,
-		'min'		=> 0,
-		'name'		=> '',
-		'required'	=> 1,
-		'break'		=> $mem_form_default_break,
-		'size'		=> '',
-		'class'		=> 'memEmail',
+		'default'     => '',
+		'isError'     => '',
+		'label'       => mem_form_gTxt('email'),
+		'placeholder' => '',
+		'max'         => 100,
+		'min'         => 0,
+		'name'        => '',
+		'required'    => 1,
+		'break'       => $mem_form_default_break,
+		'size'        => '',
+		'class'       => 'memEmail',
 	), $atts));
 
 	if (empty($name)) $name = mem_form_label2name($label);
@@ -770,16 +773,17 @@ function mem_form_email($atts)
 	}
 
 	return mem_form_text(array(
-		'default'	=> $email,
-		'isError'	=> $isError,
-		'label'		=> $label,
-		'max'		=> $max,
-		'min'		=> $min,
-		'name'		=> $name,
-		'required'	=> $required,
-		'break'		=> $break,
-		'size'		=> $size,
-		'class'		=> $class,
+		'default'     => $email,
+		'isError'     => $isError,
+		'label'       => $label,
+		'placeholder' => $placeholder,
+		'max'         => $max,
+		'min'         => $min,
+		'name'        => $name,
+		'required'    => $required,
+		'break'       => $break,
+		'size'        => $size,
+		'class'       => $class,
 	));
 }
 
@@ -1528,7 +1532,6 @@ function &get_mem_form_evaluator()
 	}
 	return $instance;
 }
-
 # --- END PLUGIN CODE ---
 if (0) {
 ?>
