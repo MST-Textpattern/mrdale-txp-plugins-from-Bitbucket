@@ -1,1 +1,0 @@
-../hak_tinymce/hak_tinymce.php
